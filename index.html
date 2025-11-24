@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>SAKEMARU 清酒職人朝聖之路｜三大酒造×獨家釀造體驗</title>
     
     <!-- React & ReactDOM -->
@@ -25,6 +25,7 @@
             font-family: 'Noto Sans TC', sans-serif;
             background-color: #fafaf9; /* Stone-50 */
             color: #1c1917; /* Stone-900 */
+            -webkit-tap-highlight-color: transparent; /* iOS click fix */
         }
         h1, h2, h3, h4, .serif-font {
             font-family: 'Noto Serif TC', serif;
@@ -48,13 +49,22 @@
         .animate-pulse-slow {
             animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
+        /* Mobile Touch Area Fix */
+        .touch-target {
+            padding: 10px;
+            margin: -10px;
+        }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        const { useState, useEffect, useRef } = React;
+
+        // --- CONFIGURATION ---
+        // ★★★ 請在此處貼上您的 GOOGLE 表單網址 (src 屬性中的網址) ★★★
+        const GOOGLE_FORM_URL = "<iframe src="https://docs.google.com/forms/d/e/1FAIpQLSey9VUEv7nN8J3_0_jLCN11jvkkHIqDd21tX_sfDQ4399vKWg/viewform?embedded=true" width="640" height="866" frameborder="0" marginheight="0" marginwidth="0">載入中…</iframe>";
 
         // --- Inline Icons ---
         const IconBase = ({ children, className }) => (
@@ -63,128 +73,36 @@
             </svg>
         );
 
-        const Wine = ({ className }) => (
-            <IconBase className={className}>
-                <path d="M8 22h8"/><path d="M7 10h10"/><path d="M12 15v7"/><path d="M12 15a5 5 0 0 0 5-5c0-2-.5-4-2-8H9c-1.5 4-2 6-2 8a5 5 0 0 0 5 5Z"/>
-            </IconBase>
-        );
-
-        const MapPin = ({ className }) => (
-            <IconBase className={className}>
-                <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/>
-            </IconBase>
-        );
-
-        const Train = ({ className }) => (
-            <IconBase className={className}>
-                <rect width="16" height="16" x="4" y="3" rx="2"/><path d="M4 11h16"/><path d="M12 3v8"/><path d="m8 19-2 3"/><path d="m18 22-2-3"/><path d="M8 15h0"/><path d="M16 15h0"/>
-            </IconBase>
-        );
+        const Wine = ({ className }) => (<IconBase className={className}><path d="M8 22h8"/><path d="M7 10h10"/><path d="M12 15v7"/><path d="M12 15a5 5 0 0 0 5-5c0-2-.5-4-2-8H9c-1.5 4-2 6-2 8a5 5 0 0 0 5 5Z"/></IconBase>);
+        const MapPin = ({ className }) => (<IconBase className={className}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></IconBase>);
+        const Train = ({ className }) => (<IconBase className={className}><rect width="16" height="16" x="4" y="3" rx="2"/><path d="M4 11h16"/><path d="M12 3v8"/><path d="m8 19-2 3"/><path d="m18 22-2-3"/><path d="M8 15h0"/><path d="M16 15h0"/></IconBase>);
+        const Calendar = ({ className }) => (<IconBase className={className}><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></IconBase>);
+        const Plane = ({ className }) => (<IconBase className={className}><path d="M2 12h5"/><path d="M13 12v7l-2 1"/><path d="M15.48 5.76a2 2 0 0 1 2.58.26l2.18 2.18a2 2 0 0 1 .26 2.58L15 17l-1 4-3-1-1-6-6-1-1-3 4-1Z"/></IconBase>);
+        const Utensils = ({ className }) => (<IconBase className={className}><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></IconBase>);
+        const BedDouble = ({ className }) => (<IconBase className={className}><path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/><path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/><path d="M12 4v6"/><path d="M2 18h20"/></IconBase>);
+        const Info = ({ className }) => (<IconBase className={className}><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></IconBase>);
+        const Check = ({ className }) => (<IconBase className={className}><polyline points="20 6 9 17 4 12"/></IconBase>);
+        const ChevronDown = ({ className }) => (<IconBase className={className}><path d="m6 9 6 6 6-6"/></IconBase>);
+        const ChevronUp = ({ className }) => (<IconBase className={className}><path d="m18 15-6-6-6 6"/></IconBase>);
+        const Star = ({ className }) => (<IconBase className={className}><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></IconBase>);
+        const Waves = ({ className }) => (<IconBase className={className}><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></IconBase>);
+        const User = ({ className }) => (<IconBase className={className}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></IconBase>);
+        const HelpCircle = ({ className }) => (<IconBase className={className}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></IconBase>);
+        const Phone = ({ className }) => (<IconBase className={className}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></IconBase>);
+        const Facebook = ({ className }) => (<IconBase className={className}><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></IconBase>);
+        const Instagram = ({ className }) => (<IconBase className={className}><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></IconBase>);
+        const XIcon = ({ className, onClick }) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} onClick={onClick}><path d="M18 6 6 18"/><path d="m6 6 18 18"/></svg>);
+        const Video = ({ className }) => (<IconBase className={className}><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></IconBase>);
+        const Users = ({ className }) => (<IconBase className={className}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></IconBase>);
+        const Home = ({ className }) => (<IconBase className={className}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></IconBase>);
         
-        const Calendar = ({ className }) => (
-            <IconBase className={className}>
-                <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/>
-            </IconBase>
-        );
-
-        const Plane = ({ className }) => (
-            <IconBase className={className}>
-                <path d="M2 12h5"/><path d="M13 12v7l-2 1"/><path d="M15.48 5.76a2 2 0 0 1 2.58.26l2.18 2.18a2 2 0 0 1 .26 2.58L15 17l-1 4-3-1-1-6-6-1-1-3 4-1Z"/>
-            </IconBase>
-        );
-
-        const Utensils = ({ className }) => (
-            <IconBase className={className}>
-                <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/>
-            </IconBase>
-        );
-
-        const BedDouble = ({ className }) => (
-            <IconBase className={className}>
-                <path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/><path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/><path d="M12 4v6"/><path d="M2 18h20"/>
-            </IconBase>
-        );
-
-        const Info = ({ className }) => (
-            <IconBase className={className}>
-                <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
-            </IconBase>
-        );
-
-        const Check = ({ className }) => (
-            <IconBase className={className}>
-                <polyline points="20 6 9 17 4 12"/>
-            </IconBase>
-        );
-
-        const ChevronDown = ({ className }) => (
-            <IconBase className={className}>
-                <path d="m6 9 6 6 6-6"/>
-            </IconBase>
-        );
-
-        const ChevronUp = ({ className }) => (
-            <IconBase className={className}>
-                <path d="m18 15-6-6-6 6"/>
-            </IconBase>
-        );
-
-        const Star = ({ className }) => (
-            <IconBase className={className}>
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-            </IconBase>
-        );
-
-        const Waves = ({ className }) => (
-            <IconBase className={className}>
-                <path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/>
-            </IconBase>
-        );
-
-        const User = ({ className }) => (
-            <IconBase className={className}>
-                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-            </IconBase>
-        );
-         
-        const HelpCircle = ({ className }) => (
-            <IconBase className={className}>
-                 <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>
-            </IconBase>
-        );
-
-        const Phone = ({ className }) => (
-            <IconBase className={className}>
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-            </IconBase>
-        );
-
-        const Facebook = ({ className }) => (
-             <IconBase className={className}>
-                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/>
-            </IconBase>
-        );
-        
-        const Instagram = ({ className }) => (
-            <IconBase className={className}>
-                <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
-            </IconBase>
-        );
-
-        const XIcon = ({ className, onClick }) => (
-             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} onClick={onClick}>
-                <path d="M18 6 6 18"/><path d="m6 6 18 18"/>
-            </svg>
-        );
-        // --- End Icons ---
-
         // --- Modal Component ---
         const Modal = ({ isOpen, onClose, children }) => {
             if (!isOpen) return null;
             return (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
-                    <div className="bg-white rounded-lg shadow-xl max-w-sm w-full p-6 relative" onClick={e => e.stopPropagation()}>
-                        <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+                    <div className="bg-white rounded-lg shadow-xl max-w-sm w-full p-6 relative animate-fade-in" onClick={e => e.stopPropagation()}>
+                        <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 p-2">
                              <XIcon className="w-6 h-6" />
                         </button>
                         {children}
@@ -194,7 +112,7 @@
         };
 
         // Header Component
-        const Header = () => {
+        const Header = ({ onViewChange, currentView }) => {
             const [isScrolled, setIsScrolled] = useState(false);
             const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -207,29 +125,36 @@
             }, []);
 
             const scrollToSection = (id) => {
-                const element = document.getElementById(id);
-                if (element) {
-                    element.scrollIntoView({ behavior: 'smooth' });
-                    setIsMenuOpen(false);
+                if (currentView !== 'main') {
+                    onViewChange('main');
+                    setTimeout(() => {
+                        const element = document.getElementById(id);
+                        if (element) element.scrollIntoView({ behavior: 'smooth' });
+                    }, 100);
+                } else {
+                    const element = document.getElementById(id);
+                    if (element) element.scrollIntoView({ behavior: 'smooth' });
                 }
+                setIsMenuOpen(false);
             };
 
             return (
-                <nav className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-white/95 shadow-md py-2 text-slate-800' : 'bg-transparent py-4 text-white'}`}>
+                <nav className={`fixed w-full z-50 transition-all duration-300 ${isScrolled || currentView === 'seminar' ? 'bg-white/95 shadow-md py-2 text-slate-800' : 'bg-transparent py-4 text-white'}`}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex justify-between items-center">
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-2 cursor-pointer" onClick={() => onViewChange('main')}>
                                 <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRunGhhtR2BSoQjF0ArH3MgbNunk2pU81buFw&s" alt="SAKEMARU Logo" className="h-10 w-10 rounded-full object-cover border-2 border-white/80" />
                                 <span className="japanese-font text-2xl font-bold tracking-widest">SAKEMARU</span>
                             </div>
                             
                             {/* Desktop Menu */}
-                            <div className="hidden md:flex space-x-8 text-sm font-medium tracking-wide">
+                            <div className="hidden md:flex space-x-8 text-sm font-medium tracking-wide items-center">
                                 <button onClick={() => scrollToSection('highlights')} className="hover:text-amber-600 transition-colors">產品優勢</button>
                                 <button onClick={() => scrollToSection('breweries')} className="hover:text-amber-600 transition-colors">三大酒造</button>
                                 <button onClick={() => scrollToSection('itinerary')} className="hover:text-amber-600 transition-colors">每日行程</button>
                                 <button onClick={() => scrollToSection('pricing')} className="hover:text-amber-600 transition-colors">價格方案</button>
                                 <button onClick={() => scrollToSection('faq')} className="hover:text-amber-600 transition-colors">常見問答</button>
+                                <button onClick={() => onViewChange('seminar')} className={`px-3 py-1 rounded transition-colors border border-amber-600 text-amber-600 hover:bg-amber-50 ${currentView === 'seminar' ? 'bg-amber-50 ring-2 ring-amber-200' : ''}`}>行前說明會</button>
                                 <button onClick={() => scrollToSection('pricing')} className="px-4 py-2 bg-amber-700 text-white rounded hover:bg-amber-800 transition-colors">立即預約</button>
                             </div>
 
@@ -253,6 +178,7 @@
                                 <button onClick={() => scrollToSection('itinerary')} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100">每日行程</button>
                                 <button onClick={() => scrollToSection('pricing')} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100">價格方案</button>
                                 <button onClick={() => scrollToSection('faq')} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100">常見問答</button>
+                                <button onClick={() => { onViewChange('seminar'); setIsMenuOpen(false); }} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100 text-amber-600 bg-amber-50">行前說明會</button>
                                 <button onClick={() => scrollToSection('pricing')} className="block w-full text-left px-3 py-2 text-base font-medium text-amber-700 font-bold">立即預約</button>
                             </div>
                         </div>
@@ -265,7 +191,7 @@
         const Hero = () => {
             return (
                 <div className="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden">
-                    {/* Background Image - Yamana Sake Brewery Exterior */}
+                    {/* Background Image - Yamana Sake Brewery Exterior (Confirmed) */}
                     <div className="absolute inset-0">
                         <img 
                             src="https://tw.sakemaru.me/cdn/shop/articles/E5_B1_B1_E5_90_8D_E9_85_92_E9_80_A0_E6_A0_AA_E5_BC_8F_E4_BC_9A_E7_A4_BE.jpg?v=1694882414" 
@@ -303,26 +229,10 @@
         // Highlights Section
         const Highlights = () => {
             const features = [
-                {
-                    icon: <User className="w-8 h-8 text-amber-700" />,
-                    title: "傳承之心：工藝親炙",
-                    desc: "超越觀光客視角。親手參與搗酒母、洗米與搬運蒸米，深入職人專注的世界，體驗釀造的溫度。"
-                },
-                {
-                    icon: <Waves className="w-8 h-8 text-amber-700" />,
-                    title: "療癒美學：電影感畫面",
-                    desc: "避開喧囂。搭乘神隱少女般的青松號列車，胯下觀賞飛龍在天，入住伊根舟屋旁的海之京都。"
-                },
-                {
-                    icon: <Wine className="w-8 h-8 text-amber-700" />,
-                    title: "四星款待：極致味覺",
-                    desc: "兩晚高品質會席料理、90分鐘酒水無限暢飲、舞鶴港直送海鮮，以及全程四星級舒適住宿。"
-                },
-                {
-                    icon: <Star className="w-8 h-8 text-amber-700" />,
-                    title: "獨家限定：僅限16席",
-                    desc: "為了確保最深度的體驗品質，本團嚴格限制人數。從品飲者升級為參與者，機會難得。"
-                }
+                { icon: <User className="w-8 h-8 text-amber-700" />, title: "傳承之心：工藝親炙", desc: "超越觀光客視角。親手參與搗酒母、洗米與搬運蒸米，深入職人專注的世界，體驗釀造的溫度。" },
+                { icon: <Waves className="w-8 h-8 text-amber-700" />, title: "療癒美學：電影感畫面", desc: "避開喧囂。搭乘神隱少女般的青松號列車，胯下觀賞飛龍在天，入住伊根舟屋旁的海之京都。" },
+                { icon: <Wine className="w-8 h-8 text-amber-700" />, title: "四星款待：極致味覺", desc: "兩晚高品質會席料理、90分鐘酒水無限暢飲、舞鶴港直送海鮮，以及全程四星級舒適住宿。" },
+                { icon: <Star className="w-8 h-8 text-amber-700" />, title: "獨家限定：僅限16席", desc: "為了確保最深度的體驗品質，本團嚴格限制人數。從品飲者升級為參與者，機會難得。" }
             ];
 
             return (
@@ -334,7 +244,6 @@
                             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mt-2">產品優勢：您值得更深度的日本</h2>
                             <p className="mt-4 text-slate-600 max-w-2xl mx-auto">告別走馬看花，這是一堂關於風土、職人與美學的實踐課。</p>
                         </div>
-
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                             {features.map((feature, index) => (
                                 <div key={index} className="bg-white p-8 rounded-lg shadow-sm hover:shadow-xl transition-shadow duration-300 border-t-4 border-amber-700 group">
@@ -352,27 +261,9 @@
         // Breweries Section
         const Breweries = () => {
             const breweries = [
-                {
-                    name: "山名酒造",
-                    sub: "Yamana Sake Brewery",
-                    desc: "源氏武士血脈相承，創業近300年。我們將親身參與「搗酒母」與「洗米」體驗，這是釀造的起點，感受傳統木桶發酵的獨特風味。",
-                    tag: "親手搗酒母體驗",
-                    image: "https://www.tambacity-kankou.jp/images/2021/04/eaed00245c317f85687d5e3b5385f9fa-scaled.jpg"
-                },
-                {
-                    name: "白杉酒造",
-                    sub: "Shirasugi Sake Brewery",
-                    desc: "全日本唯一使用100%食用米（丹後產越光米）釀酒的酒廠。獨家安排深入酒造神秘的「戰地洞窟」參觀並試飲，探訪其獨樹一格的秘密。",
-                    tag: "戰地洞窟探訪",
-                    image: "https://i.postimg.cc/ZKMTFwMM/dong-ku-bai-shan.jpg"
-                },
-                {
-                    name: "池田酒造",
-                    sub: "Ikeda Sake Brewery",
-                    desc: "位於「海之京都」舞鶴市，由夫妻職人經營。您將參與熱血的「蒸熟米搬運」與洗米體驗，用雙手與身體感受清酒誕生的每一分堅持。",
-                    tag: "蒸熟米搬運體驗",
-                    image: "https://i.postimg.cc/zXcJSxct/niang-zao-gong-cheng1.jpg"
-                }
+                { name: "山名酒造", sub: "Yamana Sake Brewery", desc: "源氏武士血脈相承，創業近300年。我們將親身參與「搗酒母」與「洗米」體驗，這是釀造的起點，感受傳統木桶發酵的獨特風味。", tag: "親手搗酒母體驗", image: "https://www.tambacity-kankou.jp/images/2021/04/eaed00245c317f85687d5e3b5385f9fa-scaled.jpg" },
+                { name: "白杉酒造", sub: "Shirasugi Sake Brewery", desc: "全日本唯一使用100%食用米（丹後產越光米）釀酒的酒廠。獨家安排深入酒造神秘的「戰地洞窟」參觀並試飲，探訪其獨樹一格的秘密。", tag: "戰地洞窟探訪", image: "https://i.postimg.cc/ZKMTFwMM/dong-ku-bai-shan.jpg" },
+                { name: "池田酒造", sub: "Ikeda Sake Brewery", desc: "位於「海之京都」舞鶴市，由夫妻職人經營。您將參與熱血的「蒸熟米搬運」與洗米體驗，用雙手與身體感受清酒誕生的每一分堅持。", tag: "蒸熟米搬運體驗", image: "https://i.postimg.cc/zXcJSxct/niang-zao-gong-cheng1.jpg" }
             ];
 
             return (
@@ -384,28 +275,18 @@
                             <div className="h-1 w-20 bg-amber-500 mx-auto mt-6"></div>
                             <p className="mt-4 text-slate-400 max-w-2xl mx-auto">不只是參觀，更是動手參與的職人體驗。</p>
                         </div>
-
                         <div className="space-y-12">
                             {breweries.map((brewery, index) => (
                                 <div key={index} className={`flex flex-col ${index % 2 === 1 ? 'md:flex-row-reverse' : 'md:flex-row'} gap-8 md:gap-12 items-center`}>
                                     <div className="w-full md:w-1/2 overflow-hidden rounded-lg shadow-2xl relative group">
                                          <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-500 z-10"></div>
-                                        <img 
-                                            src={brewery.image} 
-                                            alt={brewery.name} 
-                                            className="w-full h-64 md:h-80 object-cover transform hover:scale-105 transition-transform duration-700"
-                                            onError={(e) => {e.target.src='https://via.placeholder.com/800x600/334155/ffffff?text=' + brewery.name}}
-                                        />
+                                        <img src={brewery.image} alt={brewery.name} className="w-full h-64 md:h-80 object-cover transform hover:scale-105 transition-transform duration-700" onError={(e) => {e.target.src='https://via.placeholder.com/800x600/334155/ffffff?text=' + brewery.name}} />
                                     </div>
                                     <div className="w-full md:w-1/2 space-y-4">
-                                        <div className="inline-block px-3 py-1 border border-amber-500 text-amber-400 text-xs tracking-wider uppercase rounded-full mb-2">
-                                            {brewery.tag}
-                                        </div>
+                                        <div className="inline-block px-3 py-1 border border-amber-500 text-amber-400 text-xs tracking-wider uppercase rounded-full mb-2">{brewery.tag}</div>
                                         <h3 className="text-3xl font-bold font-serif">{brewery.name}</h3>
                                         <p className="text-slate-400 text-sm uppercase tracking-wide">{brewery.sub}</p>
-                                        <p className="text-slate-300 leading-relaxed text-lg">
-                                            {brewery.desc}
-                                        </p>
+                                        <p className="text-slate-300 leading-relaxed text-lg">{brewery.desc}</p>
                                     </div>
                                 </div>
                             ))}
@@ -415,66 +296,15 @@
             );
         };
 
-        // Itinerary Section
+        // Itinerary Section - with corrected links
         const Itinerary = () => {
             const [openDay, setOpenDay] = useState(0);
-
             const days = [
-                {
-                    day: "Day 1",
-                    title: "台北 → 大阪關西 → 達摩勝尾寺 → 丹波篠山",
-                    details: [
-                        { time: "上午", text: <span>集合於桃園機場，搭乘泰越捷航空 VZ566 飛往大阪關西機場 (07:50-11:25)。</span> },
-                        { time: "下午", text: <span>前往秘境【<a href="https://www.klook.com/zh-TW/blog/katsuo-ji-temple-day-trip/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">達摩勝尾寺</a>】，欣賞遍佈境內的「達摩不倒翁」，祈求勝利與吉祥。</span> },
-                        { time: "晚上", text: <span>入住【<a href="https://tw.tabiiro.travel/hotels/s/103507-sasayama-grandvrio-tambasasayama/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">丹波篠山和藏格蘭比利歐酒店</a>或同級。】，享用半會席自助餐 +「90分鐘酒水無限暢飲」。</span> }
-                    ],
-                    meals: { b: "X", l: "機上美食", d: "半會席自助餐+酒水暢飲" },
-                    hotel: "丹波篠山和藏格蘭比利歐酒店 (天然溫泉) 或同級"
-                },
-                {
-                    day: "Day 2",
-                    title: "山名酒造 → 蕎麥麵製作 → 觀光列車青松號",
-                    details: [
-                        { time: "上午", text: <span>★獨家體驗【<a href="https://tw.sakemaru.me/blogs/%E9%85%92%E9%80%A0/%E5%B1%B1%E5%90%8D%E9%85%92%E9%80%A0" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">山名酒造見學</a>】：親身參與「搗酒母」與「洗米」，感受近300年傳承。</span> },
-                        { time: "午餐", text: <span><a href="https://www.google.com/maps/place/WAsabi/data=!4m2!3m1!1s0x0:0x29960fdfdae338e8?sa=X&ved=1t:2428&ictx=111" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">親手製作蕎麥麵體驗</a>，並享用在地特色蕎麥餐。</span> },
-                        { time: "下午", text: <span>搭乘<a href="https://willer-travel.com/tw/train/tantetsu/aomatsu.html" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">丹鐵觀光列車青松號</a>，行駛於由良川橋梁，欣賞酷似神隱少女海中列車的夢幻景觀。</span> },
-                        { time: "住宿", text: <span>前往<a href="https://www.amanohashidate-htl.co.jp/lg_tw/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">天橋立飯店</a>或<a href="https://all.accor.com/hotel/C1P6/index.ja.shtml?utm_campaign=seo+maps&utm_medium=seo+maps&utm_source=google+Maps" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">京都宮津美居溫泉度假酒店</a>或同級。</span> }
-                    ],
-                    meals: { b: "飯店內", l: "蕎麥製作體驗餐", d: "會席料理或百匯自助餐" },
-                    hotel: "天橋立飯店 或 京都宮津美居溫泉度假酒店 或同級"
-                },
-                {
-                    day: "Day 3",
-                    title: "伊根灣遊船 → 白杉酒造 → 天橋立纜車",
-                    details: [
-                        { time: "上午", text: <span>搭乘【<a href="https://www.tankai.jp/tw/cruise/ine-bay-boat-tour/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">伊根灣遊覽船</a>】，平穩周遊伊根灣，觀察舟屋構造，海鷗伴遊。</span> },
-                        { time: "下午", text: <span>★獨家體驗【<a href="https://tw.sakemaru.me/blogs/%E9%85%92%E9%80%A0/%E7%99%BD%E6%9D%89%E9%85%92%E9%80%A0%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">白杉酒造見學</a>】：參訪神秘的「戰地洞窟」釀造場，探訪全食用米釀造秘密並試飲。</span> },
-                        { time: "景點", text: <span>搭乘<a href="https://www.tankai.jp/tw/observatory/amanohashidate-kasamatsu-park/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">天橋立觀光纜車</a>前往【<a href="https://look2uptravel.com/post-263459824/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">傘松公園展望台</a>】，體驗「胯下觀景」，俯瞰天橋立如飛龍在天。</span> }
-                    ],
-                    meals: { b: "飯店內", l: "天橋立風味餐", d: "會席料理或百匯自助餐" },
-                    hotel: "天橋立飯店 或 京都宮津美居溫泉度假酒店 或同級"
-                },
-                {
-                    day: "Day 4",
-                    title: "池田酒造 → 舞鶴港海鮮市場 → 大阪市區",
-                    details: [
-                        { time: "上午", text: <span>★獨家體驗【<a href="https://tw.sakemaru.me/blogs/%E9%85%92%E9%80%A0/%E6%B1%A0%E7%94%B0%E9%85%92%E9%80%A0" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">池田酒造見學</a>】：位於舞鶴市，體驗「洗米＋蒸熟米搬運」，感受職人熱情。</span> },
-                        { time: "午餐", text: <span>前往【<a href="https://www.gltjp.com/zh-hant/directory/item/11920/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">舞鶴港海鮮市場</a>】，日本海最大規模市場，享用直送海鮮日式御膳。</span> },
-                        { time: "下午", text: <span>返回大阪市區飯店，入住<a href="https://www.ihg.com/holidayinnexpress/hotels/tw/zh/osaka/osams/hoteldetail" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Holiday Inn Express 御堂筋</a>或<a href="https://www.marriott.com/en-us/hotels/osaoo-moxy-osaka-umeda/overview/?scid=f2ae0541-1279-4f24-b197-a979c79310b0" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">MOXY大阪新梅田</a>或同級，自由活動（推薦前往心齋橋）。</span> }
-                    ],
-                    meals: { b: "飯店內", l: "海鮮日式御膳", d: "方便逛街，敬請自理" },
-                    hotel: "Holiday Inn Express 御堂筋 或 MOXY大阪新梅田 或同級"
-                },
-                {
-                    day: "Day 5",
-                    title: "大阪 → 關西機場 → 台北",
-                    details: [
-                        { time: "上午", text: <span>享受飯店早餐，把握最後自由活動時光。</span> },
-                        { time: "下午", text: <span>前往大阪關西機場，搭乘 VZ567 (12:25-14:25) 返回台北溫暖的家。</span> }
-                    ],
-                    meals: { b: "飯店內", l: "機上美食", d: "X" },
-                    hotel: "溫暖的家"
-                }
+                { day: "Day 1", title: "台北 → 大阪關西 → 達摩勝尾寺 → 丹波篠山", details: [{ time: "上午", text: "集合於桃園機場，搭乘泰越捷航空 VZ566 飛往大阪關西機場 (07:50-11:25)。" }, { time: "下午", text: <span>前往秘境【<a href="https://www.klook.com/zh-TW/blog/katsuo-ji-temple-day-trip/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">達摩勝尾寺</a>】，欣賞遍佈境內的「達摩不倒翁」，祈求勝利與吉祥。</span> }, {time: "晚上", text: <span>入住【<a href="https://tw.tabiiro.travel/hotels/s/103507-sasayama-grandvrio-tambasasayama/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">丹波篠山和藏格蘭比利歐酒店或同級</a>】，享用半會席自助餐 +「90分鐘酒水無限暢飲」。</span>}], meals: { b: "X", l: "機上美食", d: "半會席自助餐+酒水暢飲" }, hotel: "丹波篠山和藏格蘭比利歐酒店 (天然溫泉) 或同級" },
+                { day: "Day 2", title: "山名酒造 → 蕎麥麵製作 → 觀光列車青松號", details: [{ time: "上午", text: <span>★獨家體驗【<a href="https://tw.sakemaru.me/blogs/%E9%85%92%E9%80%A0/%E5%B1%B1%E5%90%8D%E9%85%92%E9%80%A0" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">山名酒造見學</a>】：親身參與「搗酒母」與「洗米」，感受近300年傳承。</span> }, { time: "午餐", text: <span><a href="https://www.google.com/maps/place/WAsabi/data=!4m2!3m1!1s0x0:0x29960fdfdae338e8?sa=X&ved=1t:2428&ictx=111" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">親手製作蕎麥麵體驗</a>，並享用在地特色蕎麥餐。</span> }, { time: "下午", text: <span>搭乘<a href="https://willer-travel.com/tw/train/tantetsu/aomatsu.html" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">丹鐵觀光列車青松號</a>，行駛於由良川橋梁，欣賞酷似神隱少女海中列車的夢幻景觀。</span> }, { time: "住宿", text: <span>前往<a href="https://www.amanohashidate-htl.co.jp/lg_tw/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">天橋立飯店</a>或<a href="https://all.accor.com/hotel/C1P6/index.ja.shtml?utm_campaign=seo+maps&utm_medium=seo+maps&utm_source=google+Maps" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">京都宮津美居溫泉度假酒店</a>或同級。</span> }], meals: { b: "飯店內", l: "蕎麥製作體驗餐", d: "會席料理或百匯自助餐" }, hotel: "天橋立飯店 或 京都宮津美居溫泉度假酒店 或同級" },
+                { day: "Day 3", title: "伊根灣遊船 → 白杉酒造 → 天橋立纜車", details: [{ time: "上午", text: <span>搭乘【<a href="https://www.tankai.jp/tw/cruise/ine-bay-boat-tour/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">伊根灣遊覽船</a>】，平穩周遊伊根灣，觀察舟屋構造，海鷗伴遊。</span> }, { time: "下午", text: <span>★獨家體驗【<a href="https://tw.sakemaru.me/blogs/%E9%85%92%E9%80%A0/%E7%99%BD%E6%9D%89%E9%85%92%E9%80%A0%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">白杉酒造見學</a>】：參訪神秘的「戰地洞窟」，探訪全食用米釀造秘密並試飲。</span> }, { time: "景點", text: <span>搭乘<a href="https://www.tankai.jp/tw/observatory/amanohashidate-kasamatsu-park/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">天橋立觀光纜車</a>前往【<a href="https://look2uptravel.com/post-263459824/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">傘松公園展望台</a>】，體驗「胯下觀景」，俯瞰天橋立如飛龍在天。</span> }], meals: { b: "飯店內", l: "天橋立風味餐", d: "會席料理或百匯自助餐" }, hotel: "天橋立飯店 或 京都宮津美居溫泉度假酒店 或同級" },
+                { day: "Day 4", title: "池田酒造 → 舞鶴港海鮮市場 → 大阪市區", details: [{ time: "上午", text: <span>★獨家體驗【<a href="https://tw.sakemaru.me/blogs/%E9%85%92%E9%80%A0/%E6%B1%A0%E7%94%B0%E9%85%92%E9%80%A0" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">池田酒造見學</a>】：位於舞鶴市，體驗「洗米＋蒸熟米搬運」，感受職人熱情。</span> }, { time: "午餐", text: <span>前往【<a href="https://www.gltjp.com/zh-hant/directory/item/11920/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">舞鶴港海鮮市場</a>】，日本海最大規模市場，享用直送海鮮日式御膳。</span> }, { time: "下午", text: <span>返回大阪市區飯店，入住<a href="https://www.ihg.com/holidayinnexpress/hotels/tw/zh/osaka/osams/hoteldetail" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Holiday Inn Express 御堂筋</a>或<a href="https://www.marriott.com/en-us/hotels/osaoo-moxy-osaka-umeda/overview/?scid=f2ae0541-1279-4f24-b197-a979c79310b0" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">MOXY大阪新梅田</a>或同級，自由活動（推薦前往心齋橋）。</span> }], meals: { b: "飯店內", l: "海鮮日式御膳", d: "方便逛街，敬請自理" }, hotel: "Holiday Inn Express 御堂筋 或 MOXY大阪新梅田 或同級" },
+                { day: "Day 5", title: "大阪 → 關西機場 → 台北", details: [{ time: "上午", text: "享受飯店早餐，把握最後自由活動時光。" }, { time: "下午", text: "前往大阪關西機場，搭乘 VZ567 (12:25-14:25) 返回台北溫暖的家。" }], meals: { b: "飯店內", l: "機上美食", d: "X" }, hotel: "溫暖的家" }
             ];
 
             return (
@@ -484,21 +314,16 @@
                             <span className="text-amber-700 font-medium tracking-widest uppercase text-sm">Travel Itinerary</span>
                             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mt-2">五日深度行程表</h2>
                         </div>
-
                         <div className="space-y-6">
                             {days.map((item, index) => (
                                 <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden border-l-4 border-amber-700">
-                                    <button 
-                                        onClick={() => setOpenDay(openDay === index ? null : index)}
-                                        className="w-full flex items-center justify-between p-6 text-left hover:bg-stone-50 transition-colors"
-                                    >
+                                    <button onClick={() => setOpenDay(openDay === index ? null : index)} className="w-full flex items-center justify-between p-6 text-left hover:bg-stone-50 transition-colors">
                                         <div className="flex items-center gap-4">
                                             <span className="bg-slate-900 text-white px-3 py-1 rounded text-sm font-bold tracking-wider">{item.day}</span>
                                             <h3 className="text-lg md:text-xl font-bold text-slate-800">{item.title}</h3>
                                         </div>
                                         {openDay === index ? <ChevronUp className="text-slate-400 w-6 h-6" /> : <ChevronDown className="text-slate-400 w-6 h-6" />}
                                     </button>
-                                    
                                     {openDay === index && (
                                         <div className="px-6 pb-6 pt-2 bg-stone-50/50 border-t border-gray-100">
                                             <div className="space-y-4 ml-2 md:ml-12 border-l-2 border-slate-200 pl-6 py-2">
@@ -510,49 +335,26 @@
                                                     </div>
                                                 ))}
                                             </div>
-
                                             <div className="mt-6 ml-2 md:ml-12 grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded-lg border border-gray-200">
-                                                <div>
-                                                    <div className="flex items-center gap-2 mb-2 text-slate-900 font-semibold">
-                                                        <Utensils className="w-4 h-4 text-amber-600" /> 餐食
-                                                    </div>
-                                                    <div className="text-sm text-slate-600 space-y-1">
-                                                        <div className="flex justify-between border-b border-gray-100 py-1"><span>早餐</span> <span>{item.meals.b}</span></div>
-                                                        <div className="flex justify-between border-b border-gray-100 py-1"><span>午餐</span> <span>{item.meals.l}</span></div>
-                                                        <div className="flex justify-between py-1"><span>晚餐</span> <span>{item.meals.d}</span></div>
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <div className="flex items-center gap-2 mb-2 text-slate-900 font-semibold">
-                                                        <BedDouble className="w-4 h-4 text-amber-600" /> 住宿
-                                                    </div>
-                                                    <p className="text-sm text-slate-600">{item.hotel}</p>
-                                                </div>
+                                                <div><div className="flex items-center gap-2 mb-2 text-slate-900 font-semibold"><Utensils className="w-4 h-4 text-amber-600" /> 餐食</div><div className="text-sm text-slate-600 space-y-1"><div className="flex justify-between border-b border-gray-100 py-1"><span>早餐</span> <span>{item.meals.b}</span></div><div className="flex justify-between border-b border-gray-100 py-1"><span>午餐</span> <span>{item.meals.l}</span></div><div className="flex justify-between py-1"><span>晚餐</span> <span>{item.meals.d}</span></div></div></div>
+                                                <div><div className="flex items-center gap-2 mb-2 text-slate-900 font-semibold"><BedDouble className="w-4 h-4 text-amber-600" /> 住宿</div><p className="text-sm text-slate-600">{item.hotel}</p></div>
                                             </div>
                                         </div>
                                     )}
                                 </div>
                             ))}
                         </div>
-                        
-                        {/* 行程備註 / 免責聲明 */}
                         <div className="mt-8 p-6 bg-amber-50 border border-amber-200 rounded-lg text-sm text-slate-700 space-y-2">
-                            <h4 className="font-bold text-amber-800 mb-2 flex items-center gap-2">
-                                <Info className="w-4 h-4" /> 行程重要備註
-                            </h4>
-                            <ul className="list-disc list-inside space-y-1 pl-2">
-                                <li>如觀光列車「青松號」因滿席或天候等不可抗力因素無法搭乘時，將每位退費 600 日圓，敬請見諒。</li>
-                                <li>本行程安排【蕎麥麵手作體驗】因有限量名額，如遇當日客滿或因其他因素無法預約時，將調整為當地日式風味套餐（餐標 ¥3,500），不予退費敬請見諒。</li>
-                            </ul>
+                            <h4 className="font-bold text-amber-800 mb-2 flex items-center gap-2"><Info className="w-4 h-4" /> 行程重要備註</h4>
+                            <ul className="list-disc list-inside space-y-1 pl-2"><li>如觀光列車「青松號」因滿席或天候等不可抗力因素無法搭乘時，將每位退費 600 日圓，敬請見諒。</li><li>本行程安排【蕎麥麵手作體驗】因有限量名額，如遇當日客滿或因其他因素無法預約時，將調整為當地日式風味套餐（餐標 ¥3,500），不予退費敬請見諒。</li></ul>
                         </div>
                     </div>
                 </section>
             );
         };
 
-        // Info Section (Gallery style)
+        // Info Section (Gallery style) - All links removed as requested (link: null)
         const InfoSection = () => {
-             // Removed links as requested, kept descriptive structure but href is null/void
              const images = [
                 { src: "https://i.postimg.cc/tR1D45xZ/Generated-Image-November-07-2025-5-02PM.png", title: "伊根舟屋", desc: "海上浮城，品味寧靜漁村生活", link: null },
                 { src: "https://i.postimg.cc/XYgbq3CL/jie-tu-2025-11-07-xia-wu4-47-18.png", title: "天橋立", desc: "胯下觀景，顛倒視角成就飛龍在天", link: null },
@@ -582,64 +384,24 @@
                                 </div>
                             ))}
                         </div>
-
                          <div className="mt-16 grid grid-cols-1 lg:grid-cols-2 gap-12">
-                            {/* Flight Info */}
                             <div>
-                                <h3 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-                                    <Plane className="text-amber-700 w-6 h-6" /> 暫定參考航班
-                                </h3>
+                                <h3 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2"><Plane className="text-amber-700 w-6 h-6" /> 暫定參考航班</h3>
                                 <div className="bg-stone-50 rounded-xl p-6 shadow-sm border border-stone-200">
                                     <div className="space-y-4">
-                                        <div className="flex justify-between items-center border-b border-stone-200 pb-4">
-                                            <div>
-                                                <span className="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded">去程</span>
-                                                <div className="font-bold text-lg mt-1">VZ566</div>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className="text-slate-900 font-medium">07:50 台北</div>
-                                                <div className="text-slate-500 text-sm">↓</div>
-                                                <div className="text-slate-900 font-medium">11:25 大阪</div>
-                                            </div>
-                                        </div>
-                                        <div className="flex justify-between items-center pt-2">
-                                            <div>
-                                                <span className="bg-slate-200 text-slate-700 text-xs px-2 py-1 rounded">回程</span>
-                                                <div className="font-bold text-lg mt-1">VZ567</div>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className="text-slate-900 font-medium">12:25 大阪</div>
-                                                <div className="text-slate-500 text-sm">↓</div>
-                                                <div className="text-slate-900 font-medium">14:25 台北</div>
-                                            </div>
-                                        </div>
+                                        <div className="flex justify-between items-center border-b border-stone-200 pb-4"><div><span className="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded">去程</span><div className="font-bold text-lg mt-1">VZ566</div></div><div className="text-right"><div className="text-slate-900 font-medium">07:50 台北</div><div className="text-slate-500 text-sm">↓</div><div className="text-slate-900 font-medium">11:25 大阪</div></div></div>
+                                        <div className="flex justify-between items-center pt-2"><div><span className="bg-slate-200 text-slate-700 text-xs px-2 py-1 rounded">回程</span><div className="font-bold text-lg mt-1">VZ567</div></div><div className="text-right"><div className="text-slate-900 font-medium">12:25 大阪</div><div className="text-slate-500 text-sm">↓</div><div className="text-slate-900 font-medium">14:25 台北</div></div></div>
                                     </div>
                                     <p className="text-xs text-slate-400 mt-4">*實際航班以團體確認的航班編號與飛行時間為準。</p>
                                 </div>
                             </div>
-
-                            {/* Hotel Feature */}
                             <div>
-                                <h3 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2">
-                                    <BedDouble className="text-amber-700 w-6 h-6" /> 重要旅遊須知與法規提醒
-                                </h3>
+                                <h3 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2"><BedDouble className="text-amber-700 w-6 h-6" /> 重要旅遊須知與法規提醒</h3>
                                 <ul className="space-y-3">
-                                    <li className="flex items-start gap-2 text-sm text-slate-600">
-                                        <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                                        <span><strong>旅遊保險：</strong>本公司已投保旅行業契約責任險 <strong>250 萬</strong>，醫療險 <strong>20 萬</strong>。</span>
-                                    </li>
-                                    <li className="flex items-start gap-2 text-sm text-slate-600">
-                                        <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                                        <span><strong>房型說明：</strong>日本飯店多為兩小床房型。若三人同行，飯店安排<strong>二小床+一行軍床</strong>或<strong>三人鋪床</strong>，建議第三人補單房差。</span>
-                                    </li>
-                                    <li className="flex items-start gap-2 text-sm text-slate-600">
-                                        <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                                        <span><strong>電壓提醒：</strong>日本電壓為 <strong>100 伏特</strong>，若攜帶電器用品，請注意是否符合當地使用。</span>
-                                    </li>
-                                    <li className="flex items-start gap-2 text-sm text-slate-600">
-                                        <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                                        <span><strong>餐食需求：</strong>若您有<strong>食物過敏</strong>、<strong>不吃牛肉</strong>、<strong>不吃生食</strong>、<strong>不吃海鮮甲殼類</strong>等特殊餐飲需求，請務必於<strong>出發前至少 5 天</strong>（不含假日）告知承辦人員。</span>
-                                    </li>
+                                    <li className="flex items-start gap-2 text-sm text-slate-600"><Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /><span><strong>旅遊保險：</strong>本公司已投保旅行業契約責任險 <strong>250 萬</strong>，醫療險 <strong>20 萬</strong>。</span></li>
+                                    <li className="flex items-start gap-2 text-sm text-slate-600"><Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /><span><strong>房型說明：</strong>日本飯店多為兩小床房型。若三人同行，飯店安排<strong>二小床+一行軍床</strong>或<strong>三人鋪床</strong>，建議第三人補單房差。</span></li>
+                                    <li className="flex items-start gap-2 text-sm text-slate-600"><Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /><span><strong>電壓提醒：</strong>日本電壓為 <strong>100 伏特</strong>，若攜帶電器用品，請注意是否符合當地使用。</span></li>
+                                    <li className="flex items-start gap-2 text-sm text-slate-600"><Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /><span><strong>餐食需求：</strong>若您有<strong>食物過敏</strong>、<strong>不吃牛肉</strong>、<strong>不吃生食</strong>、<strong>不吃海鮮甲殼類</strong>等特殊餐飲需求，請務必於<strong>出發前至少 5 天</strong>（不含假日）告知承辦人員。</span></li>
                                 </ul>
                             </div>
                         </div>
@@ -648,7 +410,6 @@
             );
         };
 
-        // FAQ Section
         const FAQ = () => {
              const faqs = [
                 { q: "費用是否已包含所有項目？", a: "是的。包含機票、住宿、餐食、車資及三大酒造深度體驗費用。唯一未含的是領隊小費 NT$1,500/人。" },
@@ -666,10 +427,7 @@
                         <div className="grid gap-6">
                             {faqs.map((item, i) => (
                                 <div key={i} className="bg-white p-6 rounded-lg shadow-sm">
-                                    <h4 className="font-bold text-lg text-slate-800 mb-2 flex items-center gap-2">
-                                        <HelpCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
-                                        {item.q}
-                                    </h4>
+                                    <h4 className="font-bold text-lg text-slate-800 mb-2 flex items-center gap-2"><HelpCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />{item.q}</h4>
                                     <p className="text-slate-600 ml-7">{item.a}</p>
                                 </div>
                             ))}
@@ -679,24 +437,15 @@
             )
         }
 
-        // Pricing & CTA Section (Consolidated with Contact)
-        const Pricing = ({ onLineClick }) => {
-             // Countdown Logic
+        const Pricing = ({ onLineClick, onViewChange }) => {
             const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-
             useEffect(() => {
-                // Set target date to a future date (e.g., March 7, 2026, or a few days from now for demo)
-                // For demo purposes, let's set it to 15 days from now
                 const targetDate = new Date();
                 targetDate.setDate(targetDate.getDate() + 15);
-
                 const interval = setInterval(() => {
                     const now = new Date();
                     const difference = targetDate - now;
-
-                    if (difference <= 0) {
-                        clearInterval(interval);
-                    } else {
+                    if (difference <= 0) { clearInterval(interval); } else {
                         const days = Math.floor(difference / (1000 * 60 * 60 * 24));
                         const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                         const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
@@ -704,7 +453,6 @@
                         setTimeLeft({ days, hours, minutes, seconds });
                     }
                 }, 1000);
-
                 return () => clearInterval(interval);
             }, []);
 
@@ -712,146 +460,132 @@
                 <section id="pricing" className="py-20 bg-slate-900 text-white relative overflow-hidden">
                     <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-amber-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
                     <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-
                     <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
-                        <div className="inline-block bg-red-600 text-white px-6 py-2 rounded-full text-base font-bold mb-6 animate-pulse-slow shadow-[0_0_15px_rgba(220,38,38,0.7)]">
-                            超級早鳥優惠截止倒數！ {String(timeLeft.days).padStart(2,'0')}天 {String(timeLeft.hours).padStart(2,'0')}時 {String(timeLeft.minutes).padStart(2,'0')}分 {String(timeLeft.seconds).padStart(2,'0')}秒
-                        </div>
+                        <div className="inline-block bg-red-600 text-white px-6 py-2 rounded-full text-base font-bold mb-6 animate-pulse-slow shadow-[0_0_15px_rgba(220,38,38,0.7)]">超級早鳥優惠截止倒數！ {String(timeLeft.days).padStart(2,'0')}天 {String(timeLeft.hours).padStart(2,'0')}時 {String(timeLeft.minutes).padStart(2,'0')}分 {String(timeLeft.seconds).padStart(2,'0')}秒</div>
                         <h2 className="text-3xl md:text-5xl font-bold mb-6 serif-font">最終定價與席次鎖定</h2>
-                        <p className="text-lg text-slate-300 mb-10 max-w-2xl mx-auto">
-                            本團人數上限僅 16 席！體驗匠人精神，品嚐純粹風味。
-                        </p>
-                        
+                        <p className="text-lg text-slate-300 mb-10 max-w-2xl mx-auto">本團人數上限僅 16 席！體驗匠人精神，品嚐純粹風味。</p>
                         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 md:p-8 w-full max-w-2xl mx-auto border border-white/20 mb-8">
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-                                <div className="p-4 bg-white/5 rounded border border-white/10">
-                                    <div className="text-slate-400 text-xs uppercase mb-1">官方牌價 (二人一室)</div>
-                                    <div className="text-2xl font-bold">NT$ 56,500 <span className="text-sm text-amber-400 font-normal block mt-1">{`{刷卡需加2%}`}</span></div>
-                                </div>
-                                <div className="p-4 bg-amber-600/20 rounded border border-amber-500/50 relative overflow-hidden">
-                                     <div className="absolute top-0 right-0 bg-red-500 text-xs px-2 py-0.5">熱門</div>
-                                    <div className="text-amber-300 text-xs uppercase mb-1">💥 方案 A：超級早鳥 (95折)</div>
-                                    <div className="text-2xl font-bold text-amber-400">NT$ 53,675 <span className="text-sm text-white/80 font-normal block mt-1">{`{刷卡需加2%}`}</span></div>
-                                    <div className="text-xs text-amber-200/70 mt-1">限額 10 名</div>
-                                </div>
-                                <div className="p-4 bg-blue-600/20 rounded border border-blue-500/50 md:col-span-2">
-                                    <div className="text-blue-300 text-xs uppercase mb-1">✨ 方案 B：雙人同行優惠</div>
-                                    <div className="text-2xl font-bold text-blue-100">NT$ 55,500 <span className="text-sm font-normal text-slate-300">/ 人</span> <span className="text-sm text-amber-400 font-normal ml-2">{`{刷卡需加2%}`}</span></div>
-                                    <div className="text-xs text-blue-200/70 mt-1">每人現折 $1,000</div>
-                                </div>
+                                <div className="p-4 bg-white/5 rounded border border-white/10"><div className="text-slate-400 text-xs uppercase mb-1">官方牌價 (二人一室)</div><div className="text-2xl font-bold">NT$ 56,500 <span className="text-sm text-amber-400 font-normal block mt-1">{`{刷卡需加2%}`}</span></div></div>
+                                <div className="p-4 bg-amber-600/20 rounded border border-amber-500/50 relative overflow-hidden"><div className="absolute top-0 right-0 bg-red-500 text-xs px-2 py-0.5">熱門</div><div className="text-amber-300 text-xs uppercase mb-1">💥 方案 A：超級早鳥 (95折)</div><div className="text-2xl font-bold text-amber-400">NT$ 53,675 <span className="text-sm text-white/80 font-normal block mt-1">{`{刷卡需加2%}`}</span></div><div className="text-xs text-amber-200/70 mt-1">限額 10 名</div></div>
+                                <div className="p-4 bg-blue-600/20 rounded border border-blue-500/50 md:col-span-2"><div className="text-blue-300 text-xs uppercase mb-1">✨ 方案 B：雙人同行優惠</div><div className="text-2xl font-bold text-blue-100">NT$ 55,500 <span className="text-sm font-normal text-slate-300">/ 人</span> <span className="text-sm text-amber-400 font-normal ml-2">{`{刷卡需加2%}`}</span></div><div className="text-xs text-blue-200/70 mt-1">每人現折 $1,000</div></div>
                              </div>
-                             
-                             <div className="mt-6 p-4 bg-slate-800/50 rounded text-left border border-slate-700">
-                                <h4 className="text-amber-400 font-bold mb-2 flex items-center gap-2"><Plane className="w-4 h-4"/> ✈️ 自理機票價格 (Join Local)</h4>
-                                <p className="text-sm text-slate-300 mb-2">
-                                    若選擇自行購買國際段機票，將扣除機票及稅金。
-                                </p>
-                                <div className="text-xl font-bold text-white">
-                                    最終費用：NT$ 44,300 <span className="text-sm font-normal text-slate-400">/ 人</span> <span className="text-sm text-amber-400 font-normal ml-2">{`{刷卡需加2%}`}</span>
-                                </div>
-                             </div>
-
+                             <div className="mt-6 p-4 bg-slate-800/50 rounded text-left border border-slate-700"><h4 className="text-amber-400 font-bold mb-2 flex items-center gap-2"><Plane className="w-4 h-4"/> ✈️ 自理機票價格 (Join Local)</h4><p className="text-sm text-slate-300 mb-2">若選擇自行購買國際段機票，將扣除機票及稅金。</p><div className="text-xl font-bold text-white">最終費用：NT$ 44,300 <span className="text-sm font-normal text-slate-400">/ 人</span> <span className="text-sm text-amber-400 font-normal ml-2">{`{刷卡需加2%}`}</span></div></div>
                              <p className="text-xs text-slate-400 mt-4 text-left">* 方案 A 與 B 不可疊加使用。</p>
                         </div>
-                        
-                        <div className="bg-amber-900/50 p-4 rounded-lg inline-block mb-8 border border-amber-700">
-                             <span className="text-amber-300 font-bold">🎁 加碼禮：</span> 每一組預訂贈送 當地體驗釀造嚴選酒款一瓶！
-                        </div>
-
+                        <div className="bg-amber-900/50 p-4 rounded-lg inline-block mb-8 border border-amber-700"><span className="text-amber-300 font-bold">🎁 SAKEMARU加碼禮：</span> 當地釀造體驗嚴選酒款一瓶！</div>
                         <div className="flex flex-col gap-4 max-w-md mx-auto">
-                            <button onClick={onLineClick} className="w-full py-4 bg-[#06c755] hover:bg-[#05b54d] text-white rounded-lg font-bold text-lg transition-all shadow-lg flex justify-center items-center gap-2">
-                                <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" className="w-6 h-6 bg-white rounded-full p-0.5" alt="LINE" />
-                                <span>LINE 官方帳號諮詢</span>
-                            </button>
-                             <a href="https://www.facebook.com/sakemaru.tw?locale=zh_TW" target="_blank" rel="noopener noreferrer" className="w-full py-4 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-lg font-bold text-lg transition-all shadow-lg flex justify-center items-center gap-2">
-                                <Facebook className="w-6 h-6" />
-                                <span>Facebook 粉絲專頁</span>
-                            </a>
-                            <a href="https://www.instagram.com/sakemaru_tw/" target="_blank" rel="noopener noreferrer" className="w-full py-4 bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] hover:opacity-90 text-white rounded-lg font-bold text-lg transition-all shadow-lg flex justify-center items-center gap-2">
-                                <Instagram className="w-6 h-6" />
-                                <span>Instagram 官方帳號</span>
-                            </a>
-                            {/* 撥打諮詢按鈕，移除 onClick 事件使其無功能 */}
-                            <div className="w-full py-4 bg-slate-700 text-white rounded-lg font-bold text-lg shadow-lg flex justify-center items-center gap-2 cursor-default">
-                                <Phone className="w-6 h-6" />
-                                <span>撥打諮詢 (02-2700-0903)</span>
-                            </div>
+                            <button onClick={onLineClick} className="w-full py-4 bg-[#06c755] hover:bg-[#05b54d] text-white rounded-lg font-bold text-lg transition-all shadow-lg flex justify-center items-center gap-2"><img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" className="w-6 h-6 bg-white rounded-full p-0.5" alt="LINE" /><span>LINE 官方帳號諮詢</span></button>
+                             <a href="https://www.facebook.com/sakemaru.tw?locale=zh_TW" target="_blank" rel="noopener noreferrer" className="w-full py-4 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-lg font-bold text-lg transition-all shadow-lg flex justify-center items-center gap-2"><Facebook className="w-6 h-6" /><span>Facebook 粉絲專頁</span></a>
+                            <a href="https://www.instagram.com/sakemaru_tw/" target="_blank" rel="noopener noreferrer" className="w-full py-4 bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] hover:opacity-90 text-white rounded-lg font-bold text-lg transition-all shadow-lg flex justify-center items-center gap-2"><Instagram className="w-6 h-6" /><span>Instagram 官方帳號</span></a>
+                            <div className="w-full py-4 bg-slate-700 text-white rounded-lg font-bold text-lg shadow-lg flex justify-center items-center gap-2 cursor-default"><Phone className="w-6 h-6" /><span>撥打諮詢 (02-2700-0903)</span></div>
+                            <button onClick={() => onViewChange('seminar')} className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg font-bold text-lg shadow-lg flex justify-center items-center gap-2 animate-pulse"><Users className="w-6 h-6" /><span>行前說明會報名</span></button>
                         </div>
                     </div>
                 </section>
             );
         };
 
-        // Footer
         const Footer = () => {
             return (
                 <footer className="bg-stone-900 text-stone-400 py-12 border-t border-stone-800">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            <div>
-                                <span className="text-2xl font-bold text-white japanese-font tracking-widest">SAKEMARU</span>
-                                <p className="mt-4 text-sm leading-relaxed">
-                                    SAKEMARU 清酒職人朝聖之路。<br/>
-                                    為確保所有獨家行程皆能順利執行，本公司將依據<strong>《國內／國外旅遊定型化契約》</strong>之規定，並以旅客權益為首要考量，於必要時進行行程調整。
-                                </p>
-                            </div>
-                            <div>
-                                <h4 className="text-white font-bold mb-4">聯絡資訊</h4>
-                                <ul className="space-y-2 text-sm">
-                                    <li>電話諮詢：02-2700-0903</li>
-                                    <li>聯絡地址：台北市大安區瑞安街226號</li>
-                                    <li>客服信箱：support@sakemaru.me</li>
-                                    <li><a href="https://sakemaru.me/tw" target="_blank" rel="noopener noreferrer" className="hover:text-amber-500 transition-colors">官方網站：sakemaru.me/tw</a></li>
-                                </ul>
-                                <div className="mt-4 pt-4 border-t border-stone-700">
-                                    <p className="text-xs text-stone-500">日紳旅遊</p>
-                                    <p className="text-xs text-stone-500">旅行社品質保障協會字第北2190號‧交觀甲字第7830號</p>
-                                </div>
-                            </div>
-                            <div>
-                                <h4 className="text-white font-bold mb-4">注意事項</h4>
-                                <ul className="space-y-2 text-xs">
-                                    <li><strong>旅行業契約責任險 250萬，醫療險 20萬。</strong></li>
-                                    <li>最低成團人數 16 人。</li>
-                                </ul>
-                            </div>
+                            <div><span className="text-2xl font-bold text-white japanese-font tracking-widest">SAKEMARU</span><p className="mt-4 text-sm leading-relaxed">SAKEMARU 清酒職人朝聖之路。<br/>為確保所有獨家行程皆能順利執行，本公司將依據<strong>《國內／國外旅遊定型化契約》</strong>之規定，並以旅客權益為首要考量，於必要時進行行程調整。</p></div>
+                            <div><h4 className="text-white font-bold mb-4">聯絡資訊</h4><ul className="space-y-2 text-sm"><li>電話諮詢：02-2700-0903</li><li>聯絡地址：台北市大安區瑞安街226號</li><li>客服信箱：support@sakemaru.me</li><li><a href="https://sakemaru.me/tw" target="_blank" rel="noopener noreferrer" className="hover:text-amber-500 transition-colors">官方網站：sakemaru.me/tw</a></li></ul><div className="mt-4 pt-4 border-t border-stone-700"><p className="text-xs text-stone-500">日紳旅遊</p><p className="text-xs text-stone-500">旅行社品質保障協會字第北2190號‧交觀甲字第7830號</p></div></div>
+                            <div><h4 className="text-white font-bold mb-4">注意事項</h4><ul className="space-y-2 text-xs"><li><strong>旅行業契約責任險 250萬，醫療險 20萬。</strong></li><li>最低成團人數 16 人。</li></ul></div>
                         </div>
-                        <div className="border-t border-stone-800 mt-12 pt-8 text-center text-xs flex flex-col md:flex-row justify-between items-center">
+                        <div className="border-t border-stone-800 mt-12 pt-8 text-center text-xs flex flex-col md:flex-row justify-between items-center relative">
                             <span>&copy; 2025 SAKEMARU 清酒職人朝聖之路. All rights reserved.</span>
-                            <span className="mt-2 md:mt-0 opacity-70">Design by 獅日子有限公司</span>
+                            {/* Admin login removed as we are using Google Sheets for backend */}
+                            <span className="mt-4 md:mt-0 opacity-70">Design by 獅日子有限公司</span>
                         </div>
                     </div>
                 </footer>
             );
         };
 
-        const App = () => {
-             const [isModalOpen, setIsModalOpen] = useState(false);
+        // --- Seminar Page Component (Modified for Google Forms Iframe) ---
+        const SeminarPage = ({ onBack }) => {
+            useEffect(() => {
+                window.scrollTo(0, 0);
+            }, []);
 
             return (
-                <div className="antialiased selection:bg-amber-200 selection:text-amber-900">
-                    <Header />
+                <div className="min-h-screen bg-stone-50 pt-20">
+                    <div className="relative bg-slate-900 text-white py-20 px-4 overflow-hidden">
+                        <div className="absolute inset-0 opacity-40"><img src="https://i.postimg.cc/zXcJSxct/niang-zao-gong-cheng1.jpg" alt="酒造背景" className="w-full h-full object-cover" /></div>
+                        <div className="max-w-4xl mx-auto relative z-10 text-center">
+                            <span className="inline-block px-3 py-1 border border-amber-400 text-amber-400 rounded-full text-sm mb-4 tracking-wider">SAKEMARU 限定活動</span>
+                            <h1 className="text-3xl md:text-5xl font-bold mb-6 serif-font">清酒職人朝聖之路｜行前品飲說明會</h1>
+                            <p className="text-lg text-slate-200 mb-8 max-w-2xl mx-auto">為了讓您更安心地踏上這趟旅程，我們特別舉辦行前品飲會。<br/>現場品嚐三大酒造銘柄，連線杜氏解說，預覽獨家體驗。</p>
+                            <div className="flex flex-wrap justify-center gap-4 text-sm font-bold text-amber-300"><span className="flex items-center gap-1"><Wine className="w-4 h-4"/> 品飲三大酒造</span><span className="flex items-center gap-1"><Video className="w-4 h-4"/> 現場連線互動</span><span className="flex items-center gap-1"><Users className="w-4 h-4"/> 限額席次</span></div>
+                        </div>
+                    </div>
+
+                    <div className="max-w-5xl mx-auto px-4 py-12 grid grid-cols-1 lg:grid-cols-2 gap-12">
+                        <div className="space-y-8">
+                            <div className="bg-white p-6 rounded-xl shadow-sm border border-stone-200">
+                                <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2"><Info className="w-5 h-5 text-amber-600"/> 活動資訊</h3>
+                                <ul className="space-y-4 text-slate-600">
+                                    <li className="flex items-start gap-3"><Calendar className="w-5 h-5 text-slate-400 flex-shrink-0 mt-0.5"/><div><span className="font-bold text-slate-800 block">時間</span>2025年11月29日 (六) 14:00 - 16:00</div></li>
+                                    <li className="flex items-start gap-3"><MapPin className="w-5 h-5 text-slate-400 flex-shrink-0 mt-0.5"/><div><span className="font-bold text-slate-800 block">地點</span>台北市大安區瑞安街226號 (SAKEMARU 台灣總部)</div></li>
+                                    <li className="flex items-start gap-3"><div className="w-5 h-5 flex items-center justify-center text-slate-400 font-serif font-bold">$</div><div><span className="font-bold text-slate-800 block">費用</span>NT$ 200 / 人 (含三款清酒品飲與小點)</div></li>
+                                </ul>
+                            </div>
+                            <div className="bg-white p-6 rounded-xl shadow-sm border border-stone-200"><h3 className="text-xl font-bold text-slate-900 mb-4">活動亮點</h3><ul className="list-disc list-inside space-y-2 text-slate-600"><li><strong>三大酒造巡禮前哨戰：</strong>搶先品嚐山名、白杉、池田酒造代表作。</li><li><strong>杜氏連線 QA：</strong>透過視訊與日本酒造職人面對面，詢問釀造細節與體驗內容。</li><li><strong>行程深度解析：</strong>由專業顧問詳細拆解每日亮點，消除您對高價團的所有疑慮。</li></ul></div>
+                            <div className="rounded-xl overflow-hidden shadow-sm border border-stone-200 h-64"><iframe src="https://www.google.com/maps?q=台北市大安區瑞安街226號&output=embed" width="100%" height="100%" style={{border:0}} allowFullScreen="" loading="lazy"></iframe></div>
+                        </div>
+
+                        <div className="bg-white p-4 rounded-xl shadow-lg border-t-4 border-amber-600 sticky top-24">
+                            <h2 className="text-2xl font-bold text-slate-900 mb-4 text-center">立即報名說明會</h2>
+                            <div className="w-full overflow-hidden rounded bg-gray-50 border border-gray-200" style={{ height: '600px' }}>
+                                {/* Google Form Iframe Container */}
+                                <iframe 
+                                    src={GOOGLE_FORM_URL}
+                                    width="100%" 
+                                    height="100%" 
+                                    frameBorder="0" 
+                                    marginHeight="0" 
+                                    marginWidth="0"
+                                    title="Google Form Registration"
+                                >
+                                    載入中...
+                                </iframe>
+                            </div>
+                            <div className="text-center mt-4"><button type="button" onClick={onBack} className="text-sm text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1 mx-auto"><Home className="w-4 h-4"/> 返回官網</button></div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const MainPage = ({ onLineClick, onViewChange }) => {
+            return (
+                <div className="animate-fade-in">
                     <Hero />
                     <Highlights />
                     <Breweries />
                     <Itinerary />
                     <InfoSection />
                     <FAQ />
-                    <Pricing onLineClick={() => setIsModalOpen(true)} />
-                    <Footer />
+                    <Pricing onLineClick={onLineClick} onViewChange={onViewChange} />
+                </div>
+            );
+        };
 
-                    {/* QR Code Modal */}
+        const App = () => {
+            const [isModalOpen, setIsModalOpen] = useState(false);
+            const [currentView, setCurrentView] = useState('main');
+
+            return (
+                <div className="antialiased selection:bg-amber-200 selection:text-amber-900">
+                    <Header onViewChange={setCurrentView} currentView={currentView} />
+                    {currentView === 'main' && <MainPage onLineClick={() => setIsModalOpen(true)} onViewChange={setCurrentView} />}
+                    {currentView === 'seminar' && <SeminarPage onBack={() => setCurrentView('main')} />}
+                    <Footer />
                     <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-                        <div className="text-center">
-                            <h3 className="text-xl font-bold text-slate-900 mb-4">加入 LINE 官方帳號</h3>
-                            <p className="text-sm text-slate-600 mb-4">請掃描下方 QR Code 或點擊按鈕加入好友洽詢席次。</p>
-                            <div className="bg-white p-2 border border-gray-200 rounded-lg inline-block mb-4">
-                                <img src="https://i.postimg.cc/m23nFYZ9/jie-tu-2025-11-12-shang-wu11-08-17.png" alt="LINE QR Code" className="w-48 h-48 object-contain" />
-                            </div>
-                            <a href="https://lin.ee/yNtFdhG" target="_blank" rel="noopener noreferrer" className="block w-full py-3 bg-[#06C755] hover:bg-[#05b54d] text-white rounded font-bold transition-colors">
-                                一鍵加入 LINE 好友
-                            </a>
-                        </div>
+                        <div className="text-center"><h3 className="text-xl font-bold text-slate-900 mb-4">加入 LINE 官方帳號</h3><p className="text-sm text-slate-600 mb-4">請掃描下方 QR Code 或點擊按鈕加入好友洽詢席次。</p><div className="bg-white p-2 border border-gray-200 rounded-lg inline-block mb-4"><img src="https://i.postimg.cc/m23nFYZ9/jie-tu-2025-11-12-shang-wu11-08-17.png" alt="LINE QR Code" className="w-48 h-48 object-contain" /></div><a href="https://lin.ee/yNtFdhG" target="_blank" rel="noopener noreferrer" className="block w-full py-3 bg-[#06C755] hover:bg-[#05b54d] text-white rounded font-bold transition-colors">一鍵加入 LINE 好友</a></div>
                     </Modal>
                 </div>
             );
