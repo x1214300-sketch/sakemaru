@@ -19,6 +19,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@400;700&family=Shippori+Mincho:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
         body {
@@ -26,6 +27,9 @@
             background-color: #fafaf9; /* Stone-50 */
             color: #1c1917; /* Stone-900 */
             -webkit-tap-highlight-color: transparent; /* iOS click fix */
+        }
+        .en-font {
+            font-family: 'Playfair Display', serif;
         }
         h1, h2, h3, h4, .serif-font {
             font-family: 'Noto Serif TC', serif;
@@ -63,16 +67,154 @@
         const { useState, useEffect, useRef } = React;
 
         // --- CONFIGURATION ---
-        // ★★★ 請在此處貼上您的 GOOGLE 表單網址 (src 屬性中的網址) ★★★
         const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSey9VUEv7nN8J3_0_jLCN11jvkkHIqDd21tX_sfDQ4399vKWg/viewform?embedded=true";
 
-        // --- Inline Icons ---
-        const IconBase = ({ children, className }) => (
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-                {children}
-            </svg>
-        );
+        // --- TRANSLATIONS ---
+        const translations = {
+            'zh-TW': {
+                nav: { highlights: "產品優勢", breweries: "三大酒造", itinerary: "每日行程", pricing: "價格方案", faq: "常見問答", seminar: "行前說明會", book: "立即預約" },
+                hero: { subtitle: "SAKEMARU 2026 首發限定團", title: "清酒職人朝聖之路", sub: "三大酒造 × 獨家釀造體驗 5 日", desc: "全台僅限 16 席｜與杜氏親手參與釀造工序", date: "2026/03/07 - 03/11", explore: "探索行程", reserve: "搶先預約", seminarBtn: "行前說明會報名" },
+                highlights: { title: "產品優勢：您值得更深度的日本", desc: "告別走馬看花，這是一堂關於風土、職人與美學的實踐課。", 
+                    f1: { t: "傳承之心：工藝親炙", d: "超越觀光客視角。親手參與洗米與搬運蒸米，深入職人專注的世界，體驗釀造的溫度。" },
+                    f2: { t: "療癒美學：電影感畫面", d: "避開喧囂。搭乘神隱少女般的青松號列車，胯下觀賞飛龍在天，入住伊根舟屋旁的海之京都。" },
+                    f3: { t: "四星款待：極致味覺", d: "兩晚高品質會席料理、90分鐘酒水無限暢飲、舞鶴港直送海鮮，以及全程四星級舒適住宿。" },
+                    f4: { t: "獨家限定：僅限16席", d: "為了確保最深度的體驗品質，本團嚴格限制人數。從品飲者升級為參與者，機會難得。" }
+                },
+                breweries: { title: "三大酒造．深度親炙", desc: "不只是參觀，更是動手參與的職人體驗。", 
+                    b1: { name: "山名酒造", desc: "源氏武士血脈相承，創業近300年。我們將親身參與「洗米」工序，這是釀造清酒的第一步，也是決定風味的關鍵。透過雙手感受米粒的純粹，沉浸於傳統木桶發酵的獨特風味。", tag: "親手洗米體驗" },
+                    b2: { name: "白杉酒造", desc: "全日本唯一使用100%食用米（丹後產越光米）釀酒的酒廠。獨家安排深入酒造神秘的「戰地洞窟」參觀並試飲，探訪其獨樹一格的秘密。", tag: "戰地洞窟探訪" },
+                    b3: { name: "池田酒造", desc: "位於「海之京都」舞鶴市，由夫妻職人經營。您將參與熱血的「蒸熟米搬運」與洗米體驗，用雙手與身體感受清酒誕生的每一分堅持。", tag: "蒸熟米搬運體驗" }
+                },
+                itinerary: { title: "五日深度行程表", 
+                    d1: { t: "台北 → 大阪關西 → 達摩勝尾寺 → 丹波篠山", am: "集合於桃園機場，搭乘泰越捷航空 VZ566 飛往大阪關西機場 (07:50-11:25)。", pm: "前往秘境【達摩勝尾寺】，欣賞遍佈境內的「達摩不倒翁」，祈求勝利與吉祥。", night: "入住【丹波篠山和藏格蘭比利歐酒店或同級】，享用半會席自助餐 +「90分鐘酒水無限暢飲」。", meal: {b: "X", l: "機上美食", d: "半會席自助餐+酒水暢飲"}, hotel: "丹波篠山和藏格蘭比利歐酒店 (天然溫泉) 或同級" },
+                    d2: { t: "山名酒造 → 與酒造社長的美酒午宴 → 觀光列車青松號", am: "★獨家體驗【山名酒造見學】：親身參與釀造的起點「洗米」，感受近300年傳承的職人精神，為清酒的純淨風味打下最關鍵的基礎。", l_text: "酒造社長親臨同桌用餐，招待美酒並親自解說，享用在地特色蕎麥餐。", pm: "搭乘丹鐵觀光列車青松號，行駛於由良川橋梁，欣賞酷似神隱少女海中列車的夢幻景觀。", stay: "前往天橋立飯店或京都宮津美居溫泉度假酒店或同級。", meal: {b: "飯店內", l: "特色蕎麥餐", d: "會席料理或百匯自助餐"}, hotel: "天橋立飯店 或 京都宮津美居溫泉度假酒店 或同級" },
+                    d3: { t: "伊根灣遊船 → 白杉酒造 → 天橋立纜車", am: "搭乘【伊根灣遊覽船】，平穩周遊伊根灣，觀察舟屋構造，海鷗伴遊。", pm: "★獨家體驗【白杉酒造見學】：參訪神秘的「戰地洞窟」，探訪全食用米釀造秘密並試飲。", sight: "搭乘天橋立觀光纜車前往【傘松公園展望台】，體驗「胯下觀景」，俯瞰天橋立如飛龍在天。", meal: {b: "飯店內", l: "天橋立風味餐", d: "會席料理或百匯自助餐"}, hotel: "天橋立飯店 或 京都宮津美居溫泉度假酒店 或同級" },
+                    d4: { t: "池田酒造 → 舞鶴港海鮮市場 → 大阪市區", am: "★獨家體驗【池田酒造見學】：位於舞鶴市，體驗「洗米＋蒸熟米搬運」，感受職人熱情。", l_text: "前往【舞鶴港海鮮市場】，日本海最大規模市場，享用直送海鮮日式御膳。", pm: "返回大阪市區飯店，入住Holiday Inn Express 御堂筋或MOXY大阪新梅田或同級，自由活動（推薦前往心齋橋）。", meal: {b: "飯店內", l: "海鮮日式御膳", d: "方便逛街，敬請自理"}, hotel: "Holiday Inn Express 御堂筋 或 MOXY大阪新梅田 或同級" },
+                    d5: { t: "大阪 → 關西機場 → 台北", am: "享受飯店早餐，把握最後自由活動時光。", pm: "前往大阪關西機場，搭乘 VZ567 (12:25-14:25) 返回台北溫暖的家。", meal: {b: "飯店內", l: "機上美食", d: "X"}, hotel: "溫暖的家" },
+                    noteTitle: "行程重要備註", notes: ["如觀光列車「青松號」因滿席或天候等不可抗力因素無法搭乘時，將每位退費 600 日圓，敬請見諒。"],
+                    tags: { am: "上午", pm: "下午", lunch: "午餐", night: "晚上", stay: "住宿", sight: "景點", breakfast: "早餐", dinner: "晚餐" }
+                },
+                info: { title: "視覺導覽", flight: "暫定參考航班", flightNote: "*實際航班以團體確認的航班編號與飛行時間為準。", 
+                    important: "重要旅遊須知與法規提醒", 
+                    i1: "旅遊保險：本公司已投保旅行業契約責任險 250 萬，醫療險 20 萬。",
+                    i2: "房型說明：日本飯店多為兩小床房型。若三人同行，飯店安排二小床+一行軍床或三人鋪床，建議第三人補單房差。",
+                    i3: "電壓提醒：日本電壓為 100 伏特，若攜帶電器用品，請注意是否符合當地使用。",
+                    i4: "餐食需求：若您有食物過敏、不吃牛肉、不吃生食、不吃海鮮甲殼類等特殊餐飲需求，請務必於出發前至少 5 天（不含假日）告知承辦人員。",
+                    // Visual Gallery Items (No Soba)
+                    gallery: [
+                        { title: "伊根舟屋", desc: "海上浮城，品味寧靜漁村生活" },
+                        { title: "天橋立", desc: "胯下觀景，顛倒視角成就飛龍在天" },
+                        { title: "會席料理", desc: "兩晚會席料理，頂級日式款待" },
+                        { title: "舞鶴港海鮮", desc: "日本海最大市場直送鮮美御膳" },
+                        { title: "丹鐵青松號", desc: "神隱少女同款海中列車" },
+                        { title: "達摩勝尾寺", desc: "遍佈境內的吉祥達摩，祈求勝利" },
+                        { title: "大阪四星級飯店", desc: "高品質住宿，輕鬆展開市區自由活動" },
+                        { title: "京都宮津美居溫泉度假酒店", desc: "享受丹後宮津的天然溫泉與絕美海景" }
+                    ],
+                    flightTable: { outbound: "去程", return: "回程", taipei: "台北", osaka: "大阪" }
+                },
+                faq: { title: "常見問答",
+                    q1: "費用是否已包含所有項目？", a1: "是的。包含機票、住宿、餐食、車資及三大酒造深度體驗費用。唯一未含的是領隊小費 NT$1,500/人。",
+                    q2: "早鳥優惠與雙人同行優惠可同時使用嗎？", a2: "不可同時使用。方案A與方案B屬於獨立促銷方案，請擇一報名。",
+                    q3: "單人報名是否需要加價？", a3: "是的。若單人入住需加收房差 NT$10,000。若不介意與同性旅客二人一室則無需加價。",
+                    q4: "酒造體驗是否只是參觀？", a4: "不！這是本團核心價值。包含洗米與搬運蒸米，這是觀光團無法提供的深度行程。",
+                    q5: "本團的出發人數限制是多少？是否會不成團？", a5: "本團最低成團人數為 16 人。本團人數上限即為 16 人。若出發前七天未達 16 人的最低成團人數，我們將會全額退還您已繳付之訂金。",
+                    q6: "若我自己購買機票，抵達當地才跟團，費用如何計算？", a6: "若您選擇自行購買國際段機票（Join Local），本團費用將在牌價 NT$56,500 的基礎上，扣除機票費用及相關稅金。因此，自理機票的最終價格為 NT$44,300/人。"
+                },
+                pricing: { countdown: "超級早鳥優惠截止倒數！", title: "最終定價與席次鎖定", sub: "本團人數上限僅 16 席！體驗匠人精神，品嚐純粹風味。",
+                    official: "官方牌價 (二人一室)", early: "方案 A：超級早鳥 (95折)", earlyNote: "限額 10 名", double: "方案 B：雙人同行優惠", doubleNote: "每人現折 $1,000",
+                    joinLocal: "✈️ 自理機票價格 (Join Local)", joinDesc: "若選擇自行購買國際段機票，將扣除機票及稅金。", finalPrice: "最終費用：", perPerson: "/ 人",
+                    note: "* 方案 A 與 B 不可疊加使用。", bonus: "🎁 SAKEMARU加碼禮：", bonusDesc: "當地釀造體驗嚴選酒款一瓶！",
+                    btnLine: "LINE 官方帳號諮詢", btnFb: "Facebook 粉絲專頁", btnIg: "Instagram 官方帳號", btnCall: "撥打諮詢 (02-2700-0903)", btnSeminar: "行前說明會報名",
+                    timeUnits: { d: "天", h: "時", m: "分", s: "秒" }
+                },
+                footer: { desc: "SAKEMARU 清酒職人朝聖之路。\n為確保所有獨家行程皆能順利執行，本公司將依據《國內／國外旅遊定型化契約》之規定，並以旅客權益為首要考量，於必要時進行行程調整。",
+                    contact: "聯絡資訊", tel: "電話諮詢", addr: "聯絡地址", addrVal: "台北市大安區瑞安街226號", official: "官方網站", partner: "日紳旅遊", license: "旅行社品質保障協會字第北2190號‧交觀甲字第7830號",
+                    note: "注意事項", insure: "旅行業契約責任險 250萬，醫療險 20萬。", age: "最低成團人數 16 人。",
+                    copy: "© 2025 SAKEMARU 清酒職人朝聖之路. All rights reserved.", design: "Design by 獅日子有限公司"
+                },
+                seminar: { tag: "SAKEMARU 限定活動", title: "清酒職人朝聖之路｜行前品飲說明會", sub: "為了讓您更安心地踏上這趟旅程，我們特別舉辦行前品飲會。現場品嚐三大酒造銘柄，連線杜氏解說，預覽獨家體驗。",
+                    f1: "品飲三大酒造", f2: "現場連線互動", f3: "限額席次",
+                    infoTitle: "活動資訊", time: "時間", timeVal: "2025年12月06日 (六) 14:00 - 16:00", loc: "地點", locVal: "台北市大安區瑞安街226號 (SAKEMARU 瑞安店)", fee: "費用", feeVal: "NT$ 200 / 人 (含三款清酒品飲與小點)",
+                    highlightTitle: "活動亮點", h1: "三大酒造巡禮前哨戰：搶先品嚐山名、白杉、池田酒造代表作。", h2: "杜氏連線 QA：透過視訊與日本酒造職人面對面，詢問釀造細節與體驗內容。", h3: "行程深度解析：由專業顧問詳細拆解每日亮點，消除您對高價團的所有疑慮。",
+                    formTitle: "立即報名說明會", back: "返回官網"
+                },
+                card: "刷卡需加2%"
+            },
+            'en': {
+                nav: { highlights: "Highlights", breweries: "Breweries", itinerary: "Itinerary", pricing: "Pricing", faq: "FAQ", seminar: "Pre-trip Seminar", book: "Book Now" },
+                hero: { subtitle: "SAKEMARU 2026 Exclusive Tour", title: "Sake Artisan Pilgrimage", sub: "3 Breweries x Exclusive Brewing Experience 5 Days", desc: "Limited to 16 Seats | Hands-on Brewing with Toji", date: "Mar 07 - Mar 11, 2026", explore: "Explore", reserve: "Reserve", seminarBtn: "Join Seminar" },
+                highlights: { title: "Core Values: You Deserve a Deeper Japan", desc: "Say goodbye to superficial tours. This is a practical lesson on terroir, craftsmanship, and aesthetics.", 
+                    f1: { t: "Heritage: Hands-on Craft", d: "Beyond tourism. Participate in rice washing and steaming transport, diving into the artisan's world to experience the warmth of brewing." },
+                    f2: { t: "Aesthetics: Cinematic Views", d: "Escape the noise. Ride the 'Spirited Away' Aomatsu train, view the Flying Dragon at Amanohashidate, and stay by the Funaya boat houses." },
+                    f3: { t: "Hospitality: Ultimate Taste", d: "Two nights of Kaiseki cuisine, 90-min all-you-can-drink, fresh seafood from Maizuru Port, and 4-star accommodation throughout." },
+                    f4: { t: "Exclusive: 16 Seats Only", d: "Strictly limited to ensure the depth of experience. An opportunity to upgrade from a drinker to a participant." }
+                },
+                breweries: { title: "Three Breweries · Deep Dive", desc: "Not just a visit, but a hands-on artisan experience.", 
+                    b1: { name: "Yamana Brewery", desc: "Carrying the Genji samurai bloodline, founded nearly 300 years ago. We will personally participate in the 'Rice Washing' process, the first step in brewing sake and the key to flavor. Feel the purity of the rice with your hands and immerse yourself in the unique flavor of traditional wooden barrel fermentation.", tag: "Hands-on Rice Washing" },
+                    b2: { name: "Shirasugi Brewery", desc: "The only brewery in Japan using 100% edible rice (Tango Koshihikari) for sake brewing. Exclusive access to the mysterious 'Wartime Cave' for a tour and tasting, exploring its unique secrets.", tag: "Cave Expedition" },
+                    b3: { name: "Ikeda Brewery", desc: "Located in Maizuru, the 'Kyoto by the Sea'. Run by a craftsman couple. You will participate in the passionate 'Steamed Rice Transport' and rice washing, feeling the persistence of sake birth with your body.", tag: "Steamed Rice Transport" }
+                },
+                itinerary: { title: "5-Day In-Depth Itinerary", 
+                    d1: { t: "Taipei → Osaka Kansai → Katsuo-ji Temple → Tamba Sasayama", am: "Gather at Taoyuan Airport, take VietJet Air VZ566 to Osaka Kansai (07:50-11:25).", pm: <span>Visit the secret [<a href="https://www.klook.com/zh-TW/blog/katsuo-ji-temple-day-trip/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Katsuo-ji Temple</a>], admire the 'Daruma dolls' everywhere, and pray for victory and luck.</span>, night: <span>Check in at [<a href="https://tw.tabiiro.travel/hotels/s/103507-sasayama-grandvrio-tambasasayama/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Tamba Sasayama Grandvrio Hotel or similar</a>], enjoy semi-Kaiseki buffet + '90 min all-you-can-drink'.</span>, meal: {b: "X", l: "In-flight", d: "Buffet + Free Flow"}, hotel: "Tamba Sasayama Grandvrio Hotel (Onsen) or similar" },
+                    d2: { t: "Yamana Brewery → Lunch with President → Aomatsu Train", am: <span>★Exclusive [<a href="https://tw.sakemaru.me/blogs/%E9%85%92%E9%80%A0/%E5%B1%B1%E5%90%8D%E9%85%92%E9%80%A0" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Yamana Brewery Visit</a>]: Personally participate in the 'Rice Washing', the starting point of brewing. Feel the craftsman spirit passed down for nearly 300 years and lay the foundation for the pure flavor of sake.</span>, l_text: "The brewery president joins the table for lunch, hosting with fine sake and personal explanation, enjoying a local special Soba meal.", pm: <span>Take the Tango Railway [<a href="https://willer-travel.com/tw/train/tantetsu/aomatsu.html" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Aomatsu Train</a>], travel on the Yura River Bridge, and admire the dreamlike scenery resembling the sea train in Spirited Away.</span>, stay: <span>Head to <a href="https://www.amanohashidate-htl.co.jp/lg_tw/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Amanohashidate Hotel</a> or <a href="https://all.accor.com/hotel/C1P6/index.ja.shtml?utm_campaign=seo+maps&utm_medium=seo+maps&utm_source=google+Maps" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Mercure Kyoto Miyazu Resort & Spa</a> or similar.</span>, meal: {b: "Hotel", l: "Soba Special", d: "Kaiseki or Buffet"}, hotel: "Amanohashidate Hotel or Mercure Kyoto Miyazu or similar" },
+                    d3: { t: "Ine Bay Cruise → Shirasugi Brewery → Cable Car", am: <span>Take the [<a href="https://www.tankai.jp/tw/cruise/ine-bay-boat-tour/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Ine Bay Sightseeing Boat</a>], cruise smoothly around Ine Bay, observe the Funaya structure, and feed seagulls.</span>, pm: <span>★Exclusive [<a href="https://tw.sakemaru.me/blogs/%E9%85%92%E9%80%A0/%E7%99%BD%E6%9D%89%E9%85%92%E9%80%A0%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Shirasugi Brewery Visit</a>]: Visit the mysterious 'Wartime Cave', explore the secrets of 100% edible rice brewing and tasting.</span>, sight: <span>Take the Amanohashidate Cable Car to [<a href="https://look2uptravel.com/post-263459824/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Kasamatsu Park Observatory</a>], experience 'Matanozoki' (viewing between legs), overlooking Amanohashidate like a flying dragon.</span>, meal: {b: "Hotel", l: "Local Flavor", d: "Kaiseki or Buffet"}, hotel: "Amanohashidate Hotel or Mercure Kyoto Miyazu or similar" },
+                    d4: { t: "Ikeda Brewery → Maizuru Port Seafood → Osaka City", am: <span>★Exclusive [<a href="https://tw.sakemaru.me/blogs/%E9%85%92%E9%80%A0/%E6%B1%A0%E7%94%B0%E9%85%92%E9%80%A0" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Ikeda Brewery Visit</a>]: Located in Maizuru, experience 'Rice Washing + Steamed Rice Transport' and feel the craftsman's passion.</span>, l_text: <span>Go to [<a href="https://www.gltjp.com/zh-hant/directory/item/11920/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Maizuru Port Seafood Market</a>], the largest market in the Sea of Japan, and enjoy a direct-delivered seafood set meal.</span>, pm: <span>Return to Osaka city hotel, check in at <a href="https://www.ihg.com/holidayinnexpress/hotels/tw/zh/osaka/osams/hoteldetail" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Holiday Inn Express Midosuji</a> or <a href="https://www.marriott.com/en-us/hotels/osaoo-moxy-osaka-umeda/overview/?scid=f2ae0541-1279-4f24-b197-a979c79310b0" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">MOXY Osaka Shin Umeda</a> or similar, free time (Shinsaibashi recommended).</span>, meal: {b: "Hotel", l: "Seafood Set", d: "Self-arranged"}, hotel: "Holiday Inn Express or MOXY Osaka or similar" },
+                    d5: { t: "Osaka → Kansai Airport → Taipei", am: "Enjoy hotel breakfast, grasp the last free time.", pm: "Go to Osaka Kansai Airport, take VZ567 (12:25-14:25) back to Taipei.", meal: {b: "Hotel", l: "In-flight", d: "X"}, hotel: "Sweet Home" },
+                    noteTitle: "Important Notes", notes: ["If the sightseeing train 'Aomatsu' cannot be boarded due to full seats or weather, 600 JPY will be refunded per person."],
+                    tags: { am: "AM", pm: "PM", lunch: "LUNCH", night: "NIGHT", stay: "STAY", sight: "SIGHT", breakfast: "Breakfast", dinner: "Dinner" }
+                },
+                info: { title: "Visual Gallery", flight: "Flight Reference", flightNote: "*Actual flights are subject to group confirmation.", 
+                    important: "Important Travel Notes", 
+                    i1: "Insurance: We have insured travel contract liability insurance of 2.5 million and medical insurance of 200,000.",
+                    i2: "Room Type: Japanese hotels mostly have twin beds. For three people, an extra bed or futon will be arranged. Single supplement suggested for 3rd person.",
+                    i3: "Voltage: Japan is 100V. Please check if your appliances are compatible.",
+                    i4: "Dietary: Please inform us at least 5 days before departure for allergies or restrictions (no beef/raw food).",
+                    // Gallery Translations
+                    gallery: [
+                        { title: "Ine Funaya", desc: "Floating village on the sea, taste the quiet fishing village life" },
+                        { title: "Amanohashidate", desc: "Matanozoki viewing, the flying dragon in the sky" },
+                        { title: "Kaiseki Cuisine", desc: "Two nights of Kaiseki cuisine, top-tier Japanese hospitality" },
+                        { title: "Maizuru Port Seafood", desc: "Fresh seafood set meal direct from the largest market in Sea of Japan" },
+                        { title: "Tango Aomatsu Train", desc: "The 'Spirited Away' style sea train" },
+                        { title: "Katsuo-ji Temple", desc: "Winning Daruma everywhere, pray for victory" },
+                        { title: "Osaka 4-Star Hotel", desc: "High-quality stay, easy access to city activities" },
+                        { title: "Mercure Kyoto Miyazu", desc: "Enjoy natural hot springs and beautiful sea views in Tango Miyazu" }
+                    ],
+                    flightTable: { outbound: "Outbound", return: "Return", taipei: "Taipei", osaka: "Osaka" }
+                },
+                faq: { title: "FAQ",
+                    q1: "Does the fee include everything?", a1: "Yes. Includes airfare, accommodation, meals, transport, and 3 brewery experiences. Only excludes tour guide tip NT$1,500/person.",
+                    q2: "Can Early Bird and Double Booking discounts be combined?", a2: "No. Plan A and Plan B are independent promotions. Please choose one.",
+                    q3: "Is there a surcharge for single registration?", a3: "Yes. Single room supplement is NT$10,000. No surcharge if sharing a room with a same-gender traveler.",
+                    q4: "Is the brewery experience just a tour?", a4: "No! This is the core value. Includes rice washing and steamed rice transport. A depth regular tours can't offer.",
+                    q5: "What is the minimum group size?", a5: "Minimum 16 people. Max 16 people. Full deposit refund if not reached 7 days prior.",
+                    q6: "How is the fee calculated for self-arranged flights?", a6: "If you choose Join Local, the fee will be calculated based on the official price of NT$56,500, deducting ticket and tax. Final price: NT$44,300/person."
+                },
+                pricing: { countdown: "Super Early Bird Countdown!", title: "Final Pricing & Locking", sub: "Limited to 16 seats! Experience craftsmanship, taste purity.",
+                    official: "Official Price (Twin)", early: "Plan A: Super Early Bird (5% Off)", earlyNote: "Limit 10", double: "Plan B: Double Booking", doubleNote: "$1,000 Off per person",
+                    joinLocal: "✈️ Land Only Price (Join Local)", joinDesc: "Deducting ticket and tax if self-arranged flights.", finalPrice: "Final:", perPerson: "/ person",
+                    note: "* Plan A and B cannot be combined.", bonus: "🎁 SAKEMARU Bonus Gift:", bonusDesc: "One bottle of brewery selected sake!",
+                    btnLine: "Consult via LINE", btnFb: "Facebook Page", btnIg: "Instagram", btnCall: "Call Us (02-2700-0903)", btnSeminar: "Seminar Registration",
+                    timeUnits: { d: "d", h: "h", m: "m", s: "s" }
+                },
+                footer: { desc: "SAKEMARU Sake Artisan Pilgrimage.\nTo ensure the smooth execution of all exclusive itineraries, we will adjust the itinerary if necessary based on the 'Domestic/Foreign Travel Standard Contract' and with passenger rights as the primary consideration.",
+                    contact: "Contact", tel: "Tel", addr: "Address", addrVal: "No. 226, Ruian St., Da’an Dist., Taipei City", official: "Official Site", partner: "Ri-Shen Travel", license: "License No. North 2190 · Type A 7830",
+                    note: "Notes", insure: "Liability Insurance 2.5M, Medical 200K.", age: "Min group size 16 people.",
+                    copy: "© 2025 SAKEMARU Sake Tour. All rights reserved.", design: "Design by Lion Day Co."
+                },
+                seminar: { tag: "SAKEMARU Exclusive", title: "Sake Artisan Pilgrimage | Pre-trip Tasting Seminar", sub: "To help you embark on this journey with peace of mind, we are holding a pre-trip tasting. Taste sake from 3 breweries, chat with Toji online, and preview exclusive experiences.",
+                    f1: "Tasting 3 Breweries", f2: "Live Interaction", f3: "Limited Seats",
+                    infoTitle: "Event Info", time: "Time", timeVal: "Dec 06, 2025 (Sat) 14:00 - 16:00", loc: "Location", locVal: "No. 226, Ruian St., Da’an Dist., Taipei (SAKEMARU Ruian)", fee: "Fee", feeVal: "NT$ 200 / person (Includes 3 sakes & snacks)",
+                    highlightTitle: "Highlights", h1: "Preview of 3 Breweries: Taste masterpieces from Yamana, Shirasugi, and Ikeda.", h2: "Toji Live QA: Face-to-face video chat with artisans to ask about brewing details.", h3: "In-depth Analysis: Detailed breakdown by consultants to clear all doubts.",
+                    formTitle: "Register Now", back: "Back to Home"
+                },
+                card: "{Credit Card +2%}"
+            }
+        };
 
+        // ... (Icons) ...
+        const IconBase = ({ children, className }) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>);
         const Wine = ({ className }) => (<IconBase className={className}><path d="M8 22h8"/><path d="M7 10h10"/><path d="M12 15v7"/><path d="M12 15a5 5 0 0 0 5-5c0-2-.5-4-2-8H9c-1.5 4-2 6-2 8a5 5 0 0 0 5 5Z"/></IconBase>);
         const MapPin = ({ className }) => (<IconBase className={className}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></IconBase>);
         const Train = ({ className }) => (<IconBase className={className}><rect width="16" height="16" x="4" y="3" rx="2"/><path d="M4 11h16"/><path d="M12 3v8"/><path d="m8 19-2 3"/><path d="m18 22-2-3"/><path d="M8 15h0"/><path d="M16 15h0"/></IconBase>);
@@ -102,24 +244,19 @@
             return (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" onClick={onClose}>
                     <div className="bg-white rounded-lg shadow-xl max-w-sm w-full p-6 relative animate-fade-in" onClick={e => e.stopPropagation()}>
-                        <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 p-2">
-                             <XIcon className="w-6 h-6" />
-                        </button>
+                        <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 p-2"><XIcon className="w-6 h-6" /></button>
                         {children}
                     </div>
                 </div>
             );
         };
 
-        // Header Component
-        const Header = ({ onViewChange, currentView }) => {
+        const Header = ({ onViewChange, currentView, lang, setLang, t }) => {
             const [isScrolled, setIsScrolled] = useState(false);
             const [isMenuOpen, setIsMenuOpen] = useState(false);
 
             useEffect(() => {
-                const handleScroll = () => {
-                    setIsScrolled(window.scrollY > 50);
-                };
+                const handleScroll = () => setIsScrolled(window.scrollY > 50);
                 window.addEventListener('scroll', handleScroll);
                 return () => window.removeEventListener('scroll', handleScroll);
             }, []);
@@ -138,6 +275,8 @@
                 setIsMenuOpen(false);
             };
 
+            const toggleLang = () => setLang(lang === 'zh-TW' ? 'en' : 'zh-TW');
+
             return (
                 <nav className={`fixed w-full z-50 transition-all duration-300 ${isScrolled || currentView === 'seminar' ? 'bg-white/95 shadow-md py-2 text-slate-800' : 'bg-transparent py-4 text-white'}`}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -147,39 +286,35 @@
                                 <span className="japanese-font text-2xl font-bold tracking-widest">SAKEMARU</span>
                             </div>
                             
-                            {/* Desktop Menu */}
-                            <div className="hidden md:flex space-x-8 text-sm font-medium tracking-wide items-center">
-                                <button onClick={() => scrollToSection('highlights')} className="hover:text-amber-600 transition-colors">產品優勢</button>
-                                <button onClick={() => scrollToSection('breweries')} className="hover:text-amber-600 transition-colors">三大酒造</button>
-                                <button onClick={() => scrollToSection('itinerary')} className="hover:text-amber-600 transition-colors">每日行程</button>
-                                <button onClick={() => scrollToSection('pricing')} className="hover:text-amber-600 transition-colors">價格方案</button>
-                                <button onClick={() => scrollToSection('faq')} className="hover:text-amber-600 transition-colors">常見問答</button>
-                                <button onClick={() => onViewChange('seminar')} className={`px-3 py-1 rounded transition-colors border border-amber-600 text-amber-600 hover:bg-amber-50 ${currentView === 'seminar' ? 'bg-amber-50 ring-2 ring-amber-200' : ''}`}>行前說明會</button>
-                                <button onClick={() => scrollToSection('pricing')} className="px-4 py-2 bg-amber-700 text-white rounded hover:bg-amber-800 transition-colors">立即預約</button>
+                            <div className="hidden md:flex space-x-6 text-sm font-medium tracking-wide items-center">
+                                <button onClick={() => scrollToSection('highlights')} className="hover:text-amber-600 transition-colors">{t.nav.highlights}</button>
+                                <button onClick={() => scrollToSection('breweries')} className="hover:text-amber-600 transition-colors">{t.nav.breweries}</button>
+                                <button onClick={() => scrollToSection('itinerary')} className="hover:text-amber-600 transition-colors">{t.nav.itinerary}</button>
+                                <button onClick={() => scrollToSection('pricing')} className="hover:text-amber-600 transition-colors">{t.nav.pricing}</button>
+                                <button onClick={() => scrollToSection('faq')} className="hover:text-amber-600 transition-colors">{t.nav.faq}</button>
+                                <button onClick={() => onViewChange('seminar')} className={`px-3 py-1 rounded transition-colors border border-amber-600 text-amber-600 hover:bg-amber-50 ${currentView === 'seminar' ? 'bg-amber-50 ring-2 ring-amber-200' : ''}`}>{t.nav.seminar}</button>
+                                <button onClick={toggleLang} className="flex items-center gap-1 px-2 py-1 hover:text-amber-600">🌐 {lang === 'zh-TW' ? 'EN' : '中文'}</button>
+                                <button onClick={() => scrollToSection('pricing')} className="px-4 py-2 bg-amber-700 text-white rounded hover:bg-amber-800 transition-colors">{t.nav.book}</button>
                             </div>
 
-                            {/* Mobile Menu Button */}
-                            <div className="md:hidden">
+                            <div className="md:hidden flex items-center gap-4">
+                                <button onClick={toggleLang} className="text-sm font-bold">🌐 {lang === 'zh-TW' ? 'EN' : '中文'}</button>
                                 <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2">
-                                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
-                                    </svg>
+                                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} /></svg>
                                 </button>
                             </div>
                         </div>
                     </div>
-
-                    {/* Mobile Menu */}
                     {isMenuOpen && (
                         <div className="md:hidden bg-white text-slate-800 absolute w-full shadow-xl">
                             <div className="px-4 pt-2 pb-6 space-y-2">
-                                <button onClick={() => scrollToSection('highlights')} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100">產品優勢</button>
-                                <button onClick={() => scrollToSection('breweries')} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100">三大酒造</button>
-                                <button onClick={() => scrollToSection('itinerary')} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100">每日行程</button>
-                                <button onClick={() => scrollToSection('pricing')} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100">價格方案</button>
-                                <button onClick={() => scrollToSection('faq')} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100">常見問答</button>
-                                <button onClick={() => { onViewChange('seminar'); setIsMenuOpen(false); }} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100 text-amber-600 bg-amber-50">行前說明會</button>
-                                <button onClick={() => scrollToSection('pricing')} className="block w-full text-left px-3 py-2 text-base font-medium text-amber-700 font-bold">立即預約</button>
+                                <button onClick={() => scrollToSection('highlights')} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100">{t.nav.highlights}</button>
+                                <button onClick={() => scrollToSection('breweries')} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100">{t.nav.breweries}</button>
+                                <button onClick={() => scrollToSection('itinerary')} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100">{t.nav.itinerary}</button>
+                                <button onClick={() => scrollToSection('pricing')} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100">{t.nav.pricing}</button>
+                                <button onClick={() => scrollToSection('faq')} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100">{t.nav.faq}</button>
+                                <button onClick={() => { onViewChange('seminar'); setIsMenuOpen(false); }} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100 text-amber-600 bg-amber-50">{t.nav.seminar}</button>
+                                <button onClick={() => scrollToSection('pricing')} className="block w-full text-left px-3 py-2 text-base font-medium text-amber-700 font-bold">{t.nav.book}</button>
                             </div>
                         </div>
                     )}
@@ -187,73 +322,47 @@
             );
         };
 
-        // Hero Section
-        const Hero = ({ onViewChange }) => {
+        const Hero = ({ onViewChange, t }) => {
             return (
                 <div className="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden">
-                    {/* Background Image - Yamana Sake Brewery Exterior (Confirmed) */}
-                    <div className="absolute inset-0">
-                        <img 
-                            src="https://tw.sakemaru.me/cdn/shop/articles/E5_B1_B1_E5_90_8D_E9_85_92_E9_80_A0_E6_A0_AA_E5_BC_8F_E4_BC_9A_E7_A4_BE.jpg?v=1694882414" 
-                            alt="山名酒造外觀" 
-                            className="w-full h-full object-cover"
-                            onError={(e) => {e.target.src='https://images.unsplash.com/photo-1542051841857-5f90071e7989?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80'}}
-                        />
-                        <div className="absolute inset-0 hero-gradient"></div>
-                    </div>
-
+                    <div className="absolute inset-0"><img src="https://tw.sakemaru.me/cdn/shop/articles/E5_B1_B1_E5_90_8D_E9_85_92_E9_80_A0_E6_A0_AA_E5_BC_8F_E4_BC_9A_E7_A4_BE.jpg?v=1694882414" alt="Hero" className="w-full h-full object-cover" onError={(e) => {e.target.src='https://images.unsplash.com/photo-1542051841857-5f90071e7989?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80'}} /><div className="absolute inset-0 hero-gradient"></div></div>
                     <div className="relative z-10 text-center px-4 max-w-4xl mx-auto text-white">
-                        <span className="block text-amber-400 tracking-[0.3em] uppercase mb-4 text-sm md:text-base font-semibold animate-fade-in-up">SAKEMARU 2026 首發限定團</span>
-                        <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight drop-shadow-lg">
-                            清酒職人朝聖之路 <br/>
-                            <span className="japanese-font font-normal text-2xl md:text-4xl mt-4 block">三大酒造 × 獨家釀造體驗 5 日</span>
-                        </h1>
+                        <span className="block text-amber-400 tracking-[0.3em] uppercase mb-4 text-sm md:text-base font-semibold animate-fade-in-up">{t.hero.subtitle}</span>
+                        <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight drop-shadow-lg">{t.hero.title}<br/><span className="japanese-font font-normal text-2xl md:text-4xl mt-4 block">{t.hero.sub}</span></h1>
                         <div className="h-px w-24 bg-amber-400 mx-auto my-6"></div>
-                        <p className="text-lg md:text-2xl font-light mb-8 tracking-wide text-gray-100">
-                           全台僅限 16 席｜與杜氏親手參與釀造工序
-                           <span className="block mt-2 text-amber-300 font-medium">2026/03/07 - 03/11</span>
-                        </p>
+                        <p className="text-lg md:text-2xl font-light mb-8 tracking-wide text-gray-100">{t.hero.desc}<span className="block mt-2 text-amber-300 font-medium">{t.hero.date}</span></p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                            <button onClick={() => document.getElementById('itinerary').scrollIntoView({behavior: 'smooth'})} className="w-full sm:w-auto px-8 py-3 border border-white text-white hover:bg-white hover:text-slate-900 transition-all duration-300 rounded-sm uppercase tracking-widest text-sm">
-                                探索行程
-                            </button>
-                            <button onClick={() => document.getElementById('pricing').scrollIntoView({behavior: 'smooth'})} className="w-full sm:w-auto px-8 py-3 bg-amber-700 text-white hover:bg-amber-800 transition-all duration-300 rounded-sm uppercase tracking-widest text-sm shadow-lg">
-                                搶先預約
-                            </button>
-                             <button onClick={() => onViewChange('seminar')} className="w-full sm:w-auto px-8 py-3 border border-white/80 text-white hover:bg-white hover:text-amber-800 transition-all duration-300 rounded-sm uppercase tracking-widest text-sm flex items-center justify-center gap-2 backdrop-blur-sm animate-pulse">
-                                <span>行前說明會報名</span>
-                                <Users className="w-4 h-4" />
-                            </button>
+                            <button onClick={() => document.getElementById('itinerary').scrollIntoView({behavior: 'smooth'})} className="w-full sm:w-auto px-8 py-3 border border-white text-white hover:bg-white hover:text-slate-900 transition-all duration-300 rounded-sm uppercase tracking-widest text-sm">{t.hero.explore}</button>
+                            <button onClick={() => document.getElementById('pricing').scrollIntoView({behavior: 'smooth'})} className="w-full sm:w-auto px-8 py-3 bg-amber-700 text-white hover:bg-amber-800 transition-all duration-300 rounded-sm uppercase tracking-widest text-sm shadow-lg">{t.hero.reserve}</button>
+                             <button onClick={() => onViewChange('seminar')} className="w-full sm:w-auto px-8 py-3 border border-white/80 text-white hover:bg-white hover:text-amber-800 transition-all duration-300 rounded-sm uppercase tracking-widest text-sm flex items-center justify-center gap-2 backdrop-blur-sm animate-pulse"><span>{t.hero.seminarBtn}</span><Users className="w-4 h-4" /></button>
                         </div>
                     </div>
                 </div>
             );
         };
 
-        // Highlights Section
-        const Highlights = () => {
+        const Highlights = ({ t }) => {
             const features = [
-                { icon: <User className="w-8 h-8 text-amber-700" />, title: "傳承之心：工藝親炙", desc: "超越觀光客視角。親手參與搗酒母、洗米與搬運蒸米，深入職人專注的世界，體驗釀造的溫度。" },
-                { icon: <Waves className="w-8 h-8 text-amber-700" />, title: "療癒美學：電影感畫面", desc: "避開喧囂。搭乘神隱少女般的青松號列車，胯下觀賞飛龍在天，入住伊根舟屋旁的海之京都。" },
-                { icon: <Wine className="w-8 h-8 text-amber-700" />, title: "四星款待：極致味覺", desc: "兩晚高品質會席料理、90分鐘酒水無限暢飲、舞鶴港直送海鮮，以及全程四星級舒適住宿。" },
-                { icon: <Star className="w-8 h-8 text-amber-700" />, title: "獨家限定：僅限16席", desc: "為了確保最深度的體驗品質，本團嚴格限制人數。從品飲者升級為參與者，機會難得。" }
+                { icon: <User className="w-8 h-8 text-amber-700" />, title: t.highlights.f1.t, desc: t.highlights.f1.d },
+                { icon: <Waves className="w-8 h-8 text-amber-700" />, title: t.highlights.f2.t, desc: t.highlights.f2.d },
+                { icon: <Wine className="w-8 h-8 text-amber-700" />, title: t.highlights.f3.t, desc: t.highlights.f3.d },
+                { icon: <Star className="w-8 h-8 text-amber-700" />, title: t.highlights.f4.t, desc: t.highlights.f4.d }
             ];
-
             return (
                 <section id="highlights" className="py-20 bg-stone-50 relative">
                     <div className="absolute inset-0 bg-pattern"></div>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                         <div className="text-center mb-16">
                             <span className="text-amber-700 font-medium tracking-widest uppercase text-sm">Core Values</span>
-                            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mt-2">產品優勢：您值得更深度的日本</h2>
-                            <p className="mt-4 text-slate-600 max-w-2xl mx-auto">告別走馬看花，這是一堂關於風土、職人與美學的實踐課。</p>
+                            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mt-2">{t.highlights.title}</h2>
+                            <p className="mt-4 text-slate-600 max-w-2xl mx-auto">{t.highlights.desc}</p>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                            {features.map((feature, index) => (
+                            {features.map((f, index) => (
                                 <div key={index} className="bg-white p-8 rounded-lg shadow-sm hover:shadow-xl transition-shadow duration-300 border-t-4 border-amber-700 group">
-                                    <div className="mb-4 transform group-hover:scale-110 transition-transform duration-300">{feature.icon}</div>
-                                    <h3 className="text-xl font-bold text-slate-900 mb-3">{feature.title}</h3>
-                                    <p className="text-slate-600 leading-relaxed text-sm">{feature.desc}</p>
+                                    <div className="mb-4 transform group-hover:scale-110 transition-transform duration-300">{f.icon}</div>
+                                    <h3 className="text-xl font-bold text-slate-900 mb-3">{f.title}</h3>
+                                    <p className="text-slate-600 leading-relaxed text-sm">{f.desc}</p>
                                 </div>
                             ))}
                         </div>
@@ -262,35 +371,33 @@
             );
         };
 
-        // Breweries Section
-        const Breweries = () => {
+        const Breweries = ({ t }) => {
             const breweries = [
-                { name: "山名酒造", sub: "Yamana Sake Brewery", desc: "源氏武士血脈相承，創業近300年。我們將親身參與「搗酒母」與「洗米」體驗，這是釀造的起點，感受傳統木桶發酵的獨特風味。", tag: "親手搗酒母體驗", image: "https://www.tambacity-kankou.jp/images/2021/04/eaed00245c317f85687d5e3b5385f9fa-scaled.jpg" },
-                { name: "白杉酒造", sub: "Shirasugi Sake Brewery", desc: "全日本唯一使用100%食用米（丹後產越光米）釀酒的酒廠。獨家安排深入酒造神秘的「戰地洞窟」參觀並試飲，探訪其獨樹一格的秘密。", tag: "戰地洞窟探訪", image: "https://i.postimg.cc/ZKMTFwMM/dong-ku-bai-shan.jpg" },
-                { name: "池田酒造", sub: "Ikeda Sake Brewery", desc: "位於「海之京都」舞鶴市，由夫妻職人經營。您將參與熱血的「蒸熟米搬運」與洗米體驗，用雙手與身體感受清酒誕生的每一分堅持。", tag: "蒸熟米搬運體驗", image: "https://i.postimg.cc/zXcJSxct/niang-zao-gong-cheng1.jpg" }
+                { ...t.breweries.b1, image: "https://www.tambacity-kankou.jp/images/2021/04/eaed00245c317f85687d5e3b5385f9fa-scaled.jpg" },
+                { ...t.breweries.b2, image: "https://i.postimg.cc/ZKMTFwMM/dong-ku-bai-shan.jpg" },
+                { ...t.breweries.b3, image: "https://i.postimg.cc/zXcJSxct/niang-zao-gong-cheng1.jpg" }
             ];
-
             return (
                 <section id="breweries" className="py-20 bg-slate-900 text-white">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center mb-16">
                             <span className="text-amber-400 font-medium tracking-widest uppercase text-sm">Exclusive Experience</span>
-                            <h2 className="text-3xl md:text-4xl font-bold mt-2 text-white">三大酒造．深度親炙</h2>
+                            <h2 className="text-3xl md:text-4xl font-bold mt-2 text-white">{t.breweries.title}</h2>
                             <div className="h-1 w-20 bg-amber-500 mx-auto mt-6"></div>
-                            <p className="mt-4 text-slate-400 max-w-2xl mx-auto">不只是參觀，更是動手參與的職人體驗。</p>
+                            <p className="mt-4 text-slate-400 max-w-2xl mx-auto">{t.breweries.desc}</p>
                         </div>
                         <div className="space-y-12">
-                            {breweries.map((brewery, index) => (
+                            {breweries.map((b, index) => (
                                 <div key={index} className={`flex flex-col ${index % 2 === 1 ? 'md:flex-row-reverse' : 'md:flex-row'} gap-8 md:gap-12 items-center`}>
                                     <div className="w-full md:w-1/2 overflow-hidden rounded-lg shadow-2xl relative group">
                                          <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-500 z-10"></div>
-                                        <img src={brewery.image} alt={brewery.name} className="w-full h-64 md:h-80 object-cover transform hover:scale-105 transition-transform duration-700" onError={(e) => {e.target.src='https://via.placeholder.com/800x600/334155/ffffff?text=' + brewery.name}} />
+                                        <img src={b.image} alt={b.name} className="w-full h-64 md:h-80 object-cover transform hover:scale-105 transition-transform duration-700" onError={(e) => {e.target.src='https://via.placeholder.com/800x600/334155/ffffff?text=' + b.name}} />
                                     </div>
                                     <div className="w-full md:w-1/2 space-y-4">
-                                        <div className="inline-block px-3 py-1 border border-amber-500 text-amber-400 text-xs tracking-wider uppercase rounded-full mb-2">{brewery.tag}</div>
-                                        <h3 className="text-3xl font-bold font-serif">{brewery.name}</h3>
-                                        <p className="text-slate-400 text-sm uppercase tracking-wide">{brewery.sub}</p>
-                                        <p className="text-slate-300 leading-relaxed text-lg">{brewery.desc}</p>
+                                        <div className="inline-block px-3 py-1 border border-amber-500 text-amber-400 text-xs tracking-wider uppercase rounded-full mb-2">{b.tag}</div>
+                                        <h3 className="text-3xl font-bold font-serif">{b.name}</h3>
+                                        <p className="text-slate-400 text-sm uppercase tracking-wide">{b.sub || b.name}</p>
+                                        <p className="text-slate-300 leading-relaxed text-lg">{b.desc}</p>
                                     </div>
                                 </div>
                             ))}
@@ -300,48 +407,76 @@
             );
         };
 
-        // Itinerary Section - with corrected links
-        const Itinerary = () => {
+        const Itinerary = ({ t, lang }) => {
             const [openDay, setOpenDay] = useState(0);
-            const days = [
-                { day: "Day 1", title: "台北 → 大阪關西 → 達摩勝尾寺 → 丹波篠山", details: [{ time: "上午", text: "集合於桃園機場，搭乘泰越捷航空 VZ566 飛往大阪關西機場 (07:50-11:25)。" }, { time: "下午", text: <span>前往秘境【<a href="https://www.klook.com/zh-TW/blog/katsuo-ji-temple-day-trip/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">達摩勝尾寺</a>】，欣賞遍佈境內的「達摩不倒翁」，祈求勝利與吉祥。</span> }, {time: "晚上", text: <span>入住【<a href="https://tw.tabiiro.travel/hotels/s/103507-sasayama-grandvrio-tambasasayama/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">丹波篠山和藏格蘭比利歐酒店或同級</a>】，享用半會席自助餐 +「90分鐘酒水無限暢飲」。</span>}], meals: { b: "X", l: "機上美食", d: "半會席自助餐+酒水暢飲" }, hotel: "丹波篠山和藏格蘭比利歐酒店 (天然溫泉) 或同級" },
-                { day: "Day 2", title: "山名酒造 → 蕎麥麵製作 → 觀光列車青松號", details: [{ time: "上午", text: <span>★獨家體驗【<a href="https://tw.sakemaru.me/blogs/%E9%85%92%E9%80%A0/%E5%B1%B1%E5%90%8D%E9%85%92%E9%80%A0" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">山名酒造見學</a>】：親身參與「搗酒母」與「洗米」，感受近300年傳承。</span> }, { time: "午餐", text: <span><a href="https://www.google.com/maps/place/WAsabi/data=!4m2!3m1!1s0x0:0x29960fdfdae338e8?sa=X&ved=1t:2428&ictx=111" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">親手製作蕎麥麵體驗</a>，並享用在地特色蕎麥餐。</span> }, { time: "下午", text: <span>搭乘<a href="https://willer-travel.com/tw/train/tantetsu/aomatsu.html" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">丹鐵觀光列車青松號</a>，行駛於由良川橋梁，欣賞酷似神隱少女海中列車的夢幻景觀。</span> }, { time: "住宿", text: <span>前往<a href="https://www.amanohashidate-htl.co.jp/lg_tw/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">天橋立飯店</a>或<a href="https://all.accor.com/hotel/C1P6/index.ja.shtml?utm_campaign=seo+maps&utm_medium=seo+maps&utm_source=google+Maps" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">京都宮津美居溫泉度假酒店</a>或同級。</span> }], meals: { b: "飯店內", l: "蕎麥製作體驗餐", d: "會席料理或百匯自助餐" }, hotel: "天橋立飯店 或 京都宮津美居溫泉度假酒店 或同級" },
-                { day: "Day 3", title: "伊根灣遊船 → 白杉酒造 → 天橋立纜車", details: [{ time: "上午", text: <span>搭乘【<a href="https://www.tankai.jp/tw/cruise/ine-bay-boat-tour/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">伊根灣遊覽船</a>】，平穩周遊伊根灣，觀察舟屋構造，海鷗伴遊。</span> }, { time: "下午", text: <span>★獨家體驗【<a href="https://tw.sakemaru.me/blogs/%E9%85%92%E9%80%A0/%E7%99%BD%E6%9D%89%E9%85%92%E9%80%A0%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">白杉酒造見學</a>】：參訪神秘的「戰地洞窟」，探訪全食用米釀造秘密並試飲。</span> }, { time: "景點", text: <span>搭乘<a href="https://www.tankai.jp/tw/observatory/amanohashidate-kasamatsu-park/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">天橋立觀光纜車</a>前往【<a href="https://look2uptravel.com/post-263459824/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">傘松公園展望台</a>】，體驗「胯下觀景」，俯瞰天橋立如飛龍在天。</span> }], meals: { b: "飯店內", l: "天橋立風味餐", d: "會席料理或百匯自助餐" }, hotel: "天橋立飯店 或 京都宮津美居溫泉度假酒店 或同級" },
-                { day: "Day 4", title: "池田酒造 → 舞鶴港海鮮市場 → 大阪市區", details: [{ time: "上午", text: <span>★獨家體驗【<a href="https://tw.sakemaru.me/blogs/%E9%85%92%E9%80%A0/%E6%B1%A0%E7%94%B0%E9%85%92%E9%80%A0" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">池田酒造見學</a>】：位於舞鶴市，體驗「洗米＋蒸熟米搬運」，感受職人熱情。</span> }, { time: "午餐", text: <span>前往【<a href="https://www.gltjp.com/zh-hant/directory/item/11920/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">舞鶴港海鮮市場</a>】，日本海最大規模市場，享用直送海鮮日式御膳。</span> }, { time: "下午", text: <span>返回大阪市區飯店，入住<a href="https://www.ihg.com/holidayinnexpress/hotels/tw/zh/osaka/osams/hoteldetail" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Holiday Inn Express 御堂筋</a>或<a href="https://www.marriott.com/en-us/hotels/osaoo-moxy-osaka-umeda/overview/?scid=f2ae0541-1279-4f24-b197-a979c79310b0" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">MOXY大阪新梅田</a>或同級，自由活動（推薦前往心齋橋）。</span> }], meals: { b: "飯店內", l: "海鮮日式御膳", d: "方便逛街，敬請自理" }, hotel: "Holiday Inn Express 御堂筋 或 MOXY大阪新梅田 或同級" },
-                { day: "Day 5", title: "大阪 → 關西機場 → 台北", details: [{ time: "上午", text: "享受飯店早餐，把握最後自由活動時光。" }, { time: "下午", text: "前往大阪關西機場，搭乘 VZ567 (12:25-14:25) 返回台北溫暖的家。" }], meals: { b: "飯店內", l: "機上美食", d: "X" }, hotel: "溫暖的家" }
-            ];
+
+            const renderContent = (content, dayIndex, type) => {
+                // Reconstruct content that was originally JSX in 'translations' object to support dynamic rendering
+                // This approach ensures links and formatting are preserved and correctly rendered based on language
+                
+                if (lang === 'en') {
+                     if (dayIndex === 0 && type === 'pm') return <span>Visit the secret [<a href="https://www.klook.com/zh-TW/blog/katsuo-ji-temple-day-trip/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Katsuo-ji Temple</a>], admire the 'Daruma dolls' everywhere, and pray for victory and luck.</span>;
+                    if (dayIndex === 0 && type === 'night') return <span>Check in at [<a href="https://tw.tabiiro.travel/hotels/s/103507-sasayama-grandvrio-tambasasayama/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Tamba Sasayama Grandvrio Hotel or similar</a>], enjoy semi-Kaiseki buffet + '90 min all-you-can-drink'.</span>;
+                    if (dayIndex === 1 && type === 'am') return <span>★Exclusive [<a href="https://tw.sakemaru.me/blogs/%E9%85%92%E9%80%A0/%E5%B1%B1%E5%90%8D%E9%85%92%E9%80%A0" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Yamana Brewery Visit</a>]: Personally participate in the 'Rice Washing', the starting point of brewing. Feel the craftsman spirit passed down for nearly 300 years and lay the foundation for the pure flavor of sake.</span>;
+                    if (dayIndex === 1 && type === 'pm') return <span>Take the Tango Railway [<a href="https://willer-travel.com/tw/train/tantetsu/aomatsu.html" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Aomatsu Train</a>], travel on the Yura River Bridge, and admire the dreamlike scenery resembling the sea train in Spirited Away.</span>;
+                    if (dayIndex === 1 && type === 'stay') return <span>Head to <a href="https://www.amanohashidate-htl.co.jp/lg_tw/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Amanohashidate Hotel</a> or <a href="https://all.accor.com/hotel/C1P6/index.ja.shtml?utm_campaign=seo+maps&utm_medium=seo+maps&utm_source=google+Maps" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Mercure Kyoto Miyazu Resort & Spa</a> or similar.</span>;
+                    if (dayIndex === 2 && type === 'am') return <span>Take the [<a href="https://www.tankai.jp/tw/cruise/ine-bay-boat-tour/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Ine Bay Sightseeing Boat</a>], cruise smoothly around Ine Bay, observe the Funaya structure, and feed seagulls.</span>;
+                    if (dayIndex === 2 && type === 'pm') return <span>★Exclusive [<a href="https://tw.sakemaru.me/blogs/%E9%85%92%E9%80%A0/%E7%99%BD%E6%9D%89%E9%85%92%E9%80%A0%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Shirasugi Brewery Visit</a>]: Visit the mysterious 'Wartime Cave', explore the secrets of 100% edible rice brewing and tasting.</span>;
+                    if (dayIndex === 2 && type === 'sight') return <span>Take the <a href="https://www.tankai.jp/tw/observatory/amanohashidate-kasamatsu-park/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Amanohashidate Cable Car</a> to [<a href="https://look2uptravel.com/post-263459824/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Kasamatsu Park Observatory</a>], experience 'Matanozoki' (viewing between legs), overlooking Amanohashidate like a flying dragon.</span>;
+                    if (dayIndex === 3 && type === 'am') return <span>★Exclusive [<a href="https://tw.sakemaru.me/blogs/%E9%85%92%E9%80%A0/%E6%B1%A0%E7%94%B0%E9%85%92%E9%80%A0" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Ikeda Brewery Visit</a>]: Located in Maizuru, experience 'Rice Washing + Steamed Rice Transport' and feel the craftsman's passion.</span>;
+                    if (dayIndex === 3 && type === 'l_text') return <span>Go to [<a href="https://www.gltjp.com/zh-hant/directory/item/11920/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Maizuru Port Seafood Market</a>], the largest market in the Sea of Japan, and enjoy a direct-delivered seafood set meal.</span>;
+                    if (dayIndex === 3 && type === 'pm') return <span>Return to Osaka city hotel, check in at <a href="https://www.ihg.com/holidayinnexpress/hotels/tw/zh/osaka/osams/hoteldetail" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Holiday Inn Express Midosuji</a> or <a href="https://www.marriott.com/en-us/hotels/osaoo-moxy-osaka-umeda/overview/?scid=f2ae0541-1279-4f24-b197-a979c79310b0" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">MOXY Osaka Shin Umeda</a> or similar, free time (Shinsaibashi recommended).</span>;
+                }
+
+                if (lang === 'zh-TW') {
+                    if (dayIndex === 0 && type === 'pm') return <span>前往秘境【<a href="https://www.klook.com/zh-TW/blog/katsuo-ji-temple-day-trip/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">達摩勝尾寺</a>】，欣賞遍佈境內的「達摩不倒翁」，祈求勝利與吉祥。</span>;
+                    if (dayIndex === 0 && type === 'night') return <span>入住【<a href="https://tw.tabiiro.travel/hotels/s/103507-sasayama-grandvrio-tambasasayama/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">丹波篠山和藏格蘭比利歐酒店或同級</a>】，享用半會席自助餐 +「90分鐘酒水無限暢飲」。</span>;
+                    if (dayIndex === 1 && type === 'am') return <span>★獨家體驗【<a href="https://tw.sakemaru.me/blogs/%E9%85%92%E9%80%A0/%E5%B1%B1%E5%90%8D%E9%85%92%E9%80%A0" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">山名酒造見學</a>】：親身參與釀造的起點「洗米」，感受近300年傳承的職人精神，為清酒的純淨風味打下最關鍵的基礎。</span>;
+                    if (dayIndex === 1 && type === 'pm') return <span>搭乘<a href="https://willer-travel.com/tw/train/tantetsu/aomatsu.html" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">丹鐵觀光列車青松號</a>，行駛於由良川橋梁，欣賞酷似神隱少女海中列車的夢幻景觀。</span>;
+                    if (dayIndex === 1 && type === 'stay') return <span>前往<a href="https://www.amanohashidate-htl.co.jp/lg_tw/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">天橋立飯店</a>或<a href="https://all.accor.com/hotel/C1P6/index.ja.shtml?utm_campaign=seo+maps&utm_medium=seo+maps&utm_source=google+Maps" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">京都宮津美居溫泉度假酒店</a>或同級。</span>;
+                    if (dayIndex === 2 && type === 'am') return <span>搭乘【<a href="https://www.tankai.jp/tw/cruise/ine-bay-boat-tour/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">伊根灣遊覽船</a>】，平穩周遊伊根灣，觀察舟屋構造，海鷗伴遊。</span>;
+                    if (dayIndex === 2 && type === 'pm') return <span>★獨家體驗【<a href="https://tw.sakemaru.me/blogs/%E9%85%92%E9%80%A0/%E7%99%BD%E6%9D%89%E9%85%92%E9%80%A0%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">白杉酒造見學</a>】：參訪神秘的「戰地洞窟」，探訪全食用米釀造秘密並試飲。</span>;
+                    if (dayIndex === 2 && type === 'sight') return <span>搭乘<a href="https://www.tankai.jp/tw/observatory/amanohashidate-kasamatsu-park/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">天橋立觀光纜車</a>前往【<a href="https://look2uptravel.com/post-263459824/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">傘松公園展望台</a>】，體驗「胯下觀景」，俯瞰天橋立如飛龍在天。</span>;
+                    if (dayIndex === 3 && type === 'am') return <span>★獨家體驗【<a href="https://tw.sakemaru.me/blogs/%E9%85%92%E9%80%A0/%E6%B1%A0%E7%94%B0%E9%85%92%E9%80%A0" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">池田酒造見學</a>】：位於舞鶴市，體驗「洗米＋蒸熟米搬運」，感受職人熱情。</span>;
+                    if (dayIndex === 3 && type === 'l_text') return <span>前往【<a href="https://www.gltjp.com/zh-hant/directory/item/11920/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">舞鶴港海鮮市場</a>】，日本海最大規模市場，享用直送海鮮日式御膳。</span>;
+                    if (dayIndex === 3 && type === 'pm') return <span>返回大阪市區飯店，入住<a href="https://www.ihg.com/holidayinnexpress/hotels/tw/zh/osaka/osams/hoteldetail" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Holiday Inn Express 御堂筋</a>或<a href="https://www.marriott.com/en-us/hotels/osaoo-moxy-osaka-umeda/overview/?scid=f2ae0541-1279-4f24-b197-a979c79310b0" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">MOXY大阪新梅田</a>或同級，自由活動（推薦前往心齋橋）。</span>;
+                }
+                
+                return content; // Default return for unlinked content in object
+            };
+
+            const daysData = [t.itinerary.d1, t.itinerary.d2, t.itinerary.d3, t.itinerary.d4, t.itinerary.d5];
 
             return (
                 <section id="itinerary" className="py-20 bg-stone-100">
                     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center mb-12">
                             <span className="text-amber-700 font-medium tracking-widest uppercase text-sm">Travel Itinerary</span>
-                            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mt-2">五日深度行程表</h2>
+                            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mt-2">{t.itinerary.title}</h2>
                         </div>
                         <div className="space-y-6">
-                            {days.map((item, index) => (
+                            {daysData.map((day, index) => (
                                 <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden border-l-4 border-amber-700">
                                     <button onClick={() => setOpenDay(openDay === index ? null : index)} className="w-full flex items-center justify-between p-6 text-left hover:bg-stone-50 transition-colors">
                                         <div className="flex items-center gap-4">
-                                            <span className="bg-slate-900 text-white px-3 py-1 rounded text-sm font-bold tracking-wider">{item.day}</span>
-                                            <h3 className="text-lg md:text-xl font-bold text-slate-800">{item.title}</h3>
+                                            <span className="bg-slate-900 text-white px-3 py-1 rounded text-sm font-bold tracking-wider">Day {index + 1}</span>
+                                            <h3 className="text-lg md:text-xl font-bold text-slate-800">{day.t}</h3>
                                         </div>
                                         {openDay === index ? <ChevronUp className="text-slate-400 w-6 h-6" /> : <ChevronDown className="text-slate-400 w-6 h-6" />}
                                     </button>
                                     {openDay === index && (
                                         <div className="px-6 pb-6 pt-2 bg-stone-50/50 border-t border-gray-100">
                                             <div className="space-y-4 ml-2 md:ml-12 border-l-2 border-slate-200 pl-6 py-2">
-                                                {item.details.map((detail, idx) => (
-                                                    <div key={idx} className="relative">
-                                                        <span className="absolute -left-[31px] top-1 w-2.5 h-2.5 rounded-full bg-amber-500 ring-4 ring-stone-100"></span>
-                                                        <span className="text-xs font-bold text-amber-700 uppercase tracking-wider block mb-1">{detail.time}</span>
-                                                        <p className="text-slate-700">{detail.text}</p>
-                                                    </div>
-                                                ))}
+                                                {day.am && <div className="relative"><span className="absolute -left-[31px] top-1 w-2.5 h-2.5 rounded-full bg-amber-500 ring-4 ring-stone-100"></span><span className="text-xs font-bold text-amber-700 uppercase tracking-wider block mb-1">{t.itinerary.tags.am}</span><p className="text-slate-700">{renderContent(day.am, index, 'am')}</p></div>}
+                                                {day.l_text && <div className="relative"><span className="absolute -left-[31px] top-1 w-2.5 h-2.5 rounded-full bg-amber-500 ring-4 ring-stone-100"></span><span className="text-xs font-bold text-amber-700 uppercase tracking-wider block mb-1">{t.itinerary.tags.lunch}</span><p className="text-slate-700">{renderContent(day.l_text, index, 'l_text')}</p></div>}
+                                                {day.pm && <div className="relative"><span className="absolute -left-[31px] top-1 w-2.5 h-2.5 rounded-full bg-amber-500 ring-4 ring-stone-100"></span><span className="text-xs font-bold text-amber-700 uppercase tracking-wider block mb-1">{t.itinerary.tags.pm}</span><p className="text-slate-700">{renderContent(day.pm, index, 'pm')}</p></div>}
+                                                {day.night && <div className="relative"><span className="absolute -left-[31px] top-1 w-2.5 h-2.5 rounded-full bg-amber-500 ring-4 ring-stone-100"></span><span className="text-xs font-bold text-amber-700 uppercase tracking-wider block mb-1">{t.itinerary.tags.night}</span><p className="text-slate-700">{renderContent(day.night, index, 'night')}</p></div>}
+                                                {day.sight && <div className="relative"><span className="absolute -left-[31px] top-1 w-2.5 h-2.5 rounded-full bg-amber-500 ring-4 ring-stone-100"></span><span className="text-xs font-bold text-amber-700 uppercase tracking-wider block mb-1">{t.itinerary.tags.sight}</span><p className="text-slate-700">{renderContent(day.sight, index, 'sight')}</p></div>}
+                                                {day.stay && <div className="relative"><span className="absolute -left-[31px] top-1 w-2.5 h-2.5 rounded-full bg-amber-500 ring-4 ring-stone-100"></span><span className="text-xs font-bold text-amber-700 uppercase tracking-wider block mb-1">{t.itinerary.tags.stay}</span><p className="text-slate-700">{renderContent(day.stay, index, 'stay')}</p></div>}
                                             </div>
                                             <div className="mt-6 ml-2 md:ml-12 grid grid-cols-1 md:grid-cols-2 gap-4 bg-white p-4 rounded-lg border border-gray-200">
-                                                <div><div className="flex items-center gap-2 mb-2 text-slate-900 font-semibold"><Utensils className="w-4 h-4 text-amber-600" /> 餐食</div><div className="text-sm text-slate-600 space-y-1"><div className="flex justify-between border-b border-gray-100 py-1"><span>早餐</span> <span>{item.meals.b}</span></div><div className="flex justify-between border-b border-gray-100 py-1"><span>午餐</span> <span>{item.meals.l}</span></div><div className="flex justify-between py-1"><span>晚餐</span> <span>{item.meals.d}</span></div></div></div>
-                                                <div><div className="flex items-center gap-2 mb-2 text-slate-900 font-semibold"><BedDouble className="w-4 h-4 text-amber-600" /> 住宿</div><p className="text-sm text-slate-600">{item.hotel}</p></div>
+                                                <div><div className="flex items-center gap-2 mb-2 text-slate-900 font-semibold"><Utensils className="w-4 h-4 text-amber-600" /> {lang==='zh-TW'?'餐食':'Meals'}</div><div className="text-sm text-slate-600 space-y-1"><div className="flex justify-between border-b border-gray-100 py-1"><span>{t.itinerary.tags.breakfast}</span> <span>{day.meal.b}</span></div><div className="flex justify-between border-b border-gray-100 py-1"><span>{t.itinerary.tags.lunch}</span> <span>{day.meal.l}</span></div><div className="flex justify-between py-1"><span>{t.itinerary.tags.dinner}</span> <span>{day.meal.d}</span></div></div></div>
+                                                <div><div className="flex items-center gap-2 mb-2 text-slate-900 font-semibold"><BedDouble className="w-4 h-4 text-amber-600" /> {lang==='zh-TW'?'住宿':'Accommodation'}</div><p className="text-sm text-slate-600">{renderContent(day.hotel, index, 'stay')}</p></div>
                                             </div>
                                         </div>
                                     )}
@@ -349,8 +484,8 @@
                             ))}
                         </div>
                         <div className="mt-8 p-6 bg-amber-50 border border-amber-200 rounded-lg text-sm text-slate-700 space-y-2">
-                            <h4 className="font-bold text-amber-800 mb-2 flex items-center gap-2"><Info className="w-4 h-4" /> 行程重要備註</h4>
-                            <ul className="list-disc list-inside space-y-1 pl-2"><li>如觀光列車「青松號」因滿席或天候等不可抗力因素無法搭乘時，將每位退費 600 日圓，敬請見諒。</li><li>本行程安排【蕎麥麵手作體驗】因有限量名額，如遇當日客滿或因其他因素無法預約時，將調整為當地日式風味套餐（餐標 ¥3,500），不予退費敬請見諒。</li></ul>
+                            <h4 className="font-bold text-amber-800 mb-2 flex items-center gap-2"><Info className="w-4 h-4" /> {t.itinerary.noteTitle}</h4>
+                            <ul className="list-disc list-inside space-y-1 pl-2">{t.itinerary.notes.map((n, i) => <li key={i}>{n}</li>)}</ul>
                         </div>
                     </div>
                 </section>
@@ -358,24 +493,23 @@
         };
 
         // Info Section (Gallery style) - All links removed as requested (link: null)
-        const InfoSection = () => {
+        const InfoSection = ({ t }) => {
              const images = [
-                { src: "https://i.postimg.cc/tR1D45xZ/Generated-Image-November-07-2025-5-02PM.png", title: "伊根舟屋", desc: "海上浮城，品味寧靜漁村生活", link: null },
-                { src: "https://i.postimg.cc/XYgbq3CL/jie-tu-2025-11-07-xia-wu4-47-18.png", title: "天橋立", desc: "胯下觀景，顛倒視角成就飛龍在天", link: null },
-                { src: "https://tw.tabiiro.travel/lpimg/hotels/103507/cuisine/img1.jpg", title: "會席料理", desc: "兩晚會席料理，頂級日式款待", link: null },
-                { src: "https://simplife-plus.com/wp/wp-content/uploads/sIMG_8946-630x420.jpg", title: "舞鶴港海鮮", desc: "日本海最大市場直送鮮美御膳", link: null },
-                { src: "https://tango-kingdom-onlineshop.com/blog/wp-content/uploads/2022/05/%E4%B8%B9%E5%BE%8C%E3%81%82%E3%81%8A%E3%81%BE%E3%81%A4%E5%8F%B7%EF%BC%88%E7%94%B1%E8%89%AF%E5%B7%9D%E6%A9%8B%E6%A2%81%EF%BC%89-min-1-1536x1024.jpg", title: "丹鐵青松號", desc: "神隱少女同款海中列車", link: null },
-                { src: "https://res.klook.com/image/upload/fl_lossy.progressive,w_432,h_288,c_fill,q_85/activities/vbmyo4aavvh3pdvflg39.jpg", title: "達摩勝尾寺", desc: "遍佈境內的吉祥達摩，祈求勝利", link: null },
-                { src: "https://travel.rakuten.co.jp/mytrip/sites/mytrip/files/styles/main_image/public/2023-05/spot-osaka-key2023.jpg?itok=xx71J_uc", title: "大阪四星級飯店", desc: "高品質住宿，輕鬆展開市區自由活動", link: null },
-                { src: "https://i.postimg.cc/LXyksy4q/Gemini-Generated-Image-etzh6detzh6detzh.png", title: "蕎麥麵體驗", desc: "親手製作並享用在地特色蕎麥餐", link: null },
-                { src: "https://lh3.googleusercontent.com/p/AF1QipMSJTeubOZZYRx2BnlT2d7EDX5il0vxCNZJpyUe=s1360-w1360-h1020-rw", title: "京都宮津美居溫泉度假酒店", desc: "享受丹後宮津的天然溫泉與絕美海景", link: null }
+                { ...t.info.gallery[0], src: "https://i.postimg.cc/tR1D45xZ/Generated-Image-November-07-2025-5-02PM.png", link: null },
+                { ...t.info.gallery[1], src: "https://i.postimg.cc/XYgbq3CL/jie-tu-2025-11-07-xia-wu4-47-18.png", link: null },
+                { ...t.info.gallery[2], src: "https://tw.tabiiro.travel/lpimg/hotels/103507/cuisine/img1.jpg", link: null },
+                { ...t.info.gallery[3], src: "https://simplife-plus.com/wp/wp-content/uploads/sIMG_8946-630x420.jpg", link: null },
+                { ...t.info.gallery[4], src: "https://tango-kingdom-onlineshop.com/blog/wp-content/uploads/2022/05/%E4%B8%B9%E5%BE%8C%E3%81%82%E3%81%8A%E3%81%BE%E3%81%A4%E5%8F%B7%EF%BC%88%E7%94%B1%E8%89%AF%E5%B7%9D%E6%A9%8B%E6%A2%81%EF%BC%89-min-1-1536x1024.jpg", link: null },
+                { ...t.info.gallery[5], src: "https://res.klook.com/image/upload/fl_lossy.progressive,w_432,h_288,c_fill,q_85/activities/vbmyo4aavvh3pdvflg39.jpg", link: null },
+                { ...t.info.gallery[6], src: "https://travel.rakuten.co.jp/mytrip/sites/mytrip/files/styles/main_image/public/2023-05/spot-osaka-key2023.jpg?itok=xx71J_uc", link: null },
+                { ...t.info.gallery[7], src: "https://lh3.googleusercontent.com/p/AF1QipMSJTeubOZZYRx2BnlT2d7EDX5il0vxCNZJpyUe=s1360-w1360-h1020-rw", link: null }
             ];
 
             return (
                 <section id="info" className="py-20 bg-white">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center mb-12">
-                            <h2 className="text-3xl font-bold text-slate-900">視覺導覽</h2>
+                            <h2 className="text-3xl font-bold text-slate-900">{t.info.title}</h2>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                              {images.map((img, idx) => (
@@ -390,22 +524,22 @@
                         </div>
                          <div className="mt-16 grid grid-cols-1 lg:grid-cols-2 gap-12">
                             <div>
-                                <h3 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2"><Plane className="text-amber-700 w-6 h-6" /> 暫定參考航班</h3>
+                                <h3 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2"><Plane className="text-amber-700 w-6 h-6" /> {t.info.flight}</h3>
                                 <div className="bg-stone-50 rounded-xl p-6 shadow-sm border border-stone-200">
                                     <div className="space-y-4">
-                                        <div className="flex justify-between items-center border-b border-stone-200 pb-4"><div><span className="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded">去程</span><div className="font-bold text-lg mt-1">VZ566</div></div><div className="text-right"><div className="text-slate-900 font-medium">07:50 台北</div><div className="text-slate-500 text-sm">↓</div><div className="text-slate-900 font-medium">11:25 大阪</div></div></div>
-                                        <div className="flex justify-between items-center pt-2"><div><span className="bg-slate-200 text-slate-700 text-xs px-2 py-1 rounded">回程</span><div className="font-bold text-lg mt-1">VZ567</div></div><div className="text-right"><div className="text-slate-900 font-medium">12:25 大阪</div><div className="text-slate-500 text-sm">↓</div><div className="text-slate-900 font-medium">14:25 台北</div></div></div>
+                                        <div className="flex justify-between items-center border-b border-stone-200 pb-4"><div><span className="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded">{t.info.flightTable.outbound}</span><div className="font-bold text-lg mt-1">VZ566</div></div><div className="text-right"><div className="text-slate-900 font-medium">07:50 {t.info.flightTable.taipei}</div><div className="text-slate-500 text-sm">↓</div><div className="text-slate-900 font-medium">11:25 {t.info.flightTable.osaka}</div></div></div>
+                                        <div className="flex justify-between items-center pt-2"><div><span className="bg-slate-200 text-slate-700 text-xs px-2 py-1 rounded">{t.info.flightTable.return}</span><div className="font-bold text-lg mt-1">VZ567</div></div><div className="text-right"><div className="text-slate-900 font-medium">12:25 {t.info.flightTable.osaka}</div><div className="text-slate-500 text-sm">↓</div><div className="text-slate-900 font-medium">14:25 {t.info.flightTable.taipei}</div></div></div>
                                     </div>
-                                    <p className="text-xs text-slate-400 mt-4">*實際航班以團體確認的航班編號與飛行時間為準。</p>
+                                    <p className="text-xs text-slate-400 mt-4">{t.info.flightNote}</p>
                                 </div>
                             </div>
                             <div>
-                                <h3 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2"><BedDouble className="text-amber-700 w-6 h-6" /> 重要旅遊須知與法規提醒</h3>
+                                <h3 className="text-2xl font-bold text-slate-900 mb-6 flex items-center gap-2"><BedDouble className="text-amber-700 w-6 h-6" /> {t.info.important}</h3>
                                 <ul className="space-y-3">
-                                    <li className="flex items-start gap-2 text-sm text-slate-600"><Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /><span><strong>旅遊保險：</strong>本公司已投保旅行業契約責任險 <strong>250 萬</strong>，醫療險 <strong>20 萬</strong>。</span></li>
-                                    <li className="flex items-start gap-2 text-sm text-slate-600"><Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /><span><strong>房型說明：</strong>日本飯店多為兩小床房型。若三人同行，飯店安排<strong>二小床+一行軍床</strong>或<strong>三人鋪床</strong>，建議第三人補單房差。</span></li>
-                                    <li className="flex items-start gap-2 text-sm text-slate-600"><Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /><span><strong>電壓提醒：</strong>日本電壓為 <strong>100 伏特</strong>，若攜帶電器用品，請注意是否符合當地使用。</span></li>
-                                    <li className="flex items-start gap-2 text-sm text-slate-600"><Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /><span><strong>餐食需求：</strong>若您有<strong>食物過敏</strong>、<strong>不吃牛肉</strong>、<strong>不吃生食</strong>、<strong>不吃海鮮甲殼類</strong>等特殊餐飲需求，請務必於<strong>出發前至少 5 天</strong>（不含假日）告知承辦人員。</span></li>
+                                    <li className="flex items-start gap-2 text-sm text-slate-600"><Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /><span>{t.info.i1}</span></li>
+                                    <li className="flex items-start gap-2 text-sm text-slate-600"><Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /><span>{t.info.i2}</span></li>
+                                    <li className="flex items-start gap-2 text-sm text-slate-600"><Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /><span>{t.info.i3}</span></li>
+                                    <li className="flex items-start gap-2 text-sm text-slate-600"><Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" /><span>{t.info.i4}</span></li>
                                 </ul>
                             </div>
                         </div>
@@ -414,20 +548,20 @@
             );
         };
 
-        const FAQ = () => {
+        const FAQ = ({ t }) => {
              const faqs = [
-                { q: "費用是否已包含所有項目？", a: "是的。包含機票、住宿、餐食、車資及三大酒造深度體驗費用。唯一未含的是領隊小費 NT$1,500/人。" },
-                { q: "早鳥優惠與雙人同行優惠可同時使用嗎？", a: "不可同時使用。方案A與方案B屬於獨立促銷方案，請擇一報名。" },
-                { q: "單人報名是否需要加價？", a: "是的。若單人入住需加收房差 NT$10,000。若不介意與同性旅客二人一室則無需加價。" },
-                { q: "酒造體驗是否只是參觀？", a: "不！這是本團核心價值。包含「親手」搗酒母、洗米與搬運蒸米，這是觀光團無法提供的深度行程。" },
-                { q: "本團的出發人數限制是多少？是否會不成團？", a: "本團最低成團人數為 16 人。本團人數上限即為 16 人。若出發前七天未達 16 人的最低成團人數，我們將會全額退還您已繳付之訂金。" },
-                { q: "若我自己購買機票，抵達當地才跟團，費用如何計算？", a: "若您選擇自行購買國際段機票（Join Local），本團費用將在牌價 NT$56,500 的基礎上，扣除機票費用及相關稅金。因此，自理機票的最終價格為 NT$44,300/人。" }
+                { q: t.faq.q1, a: t.faq.a1 },
+                { q: t.faq.q2, a: t.faq.a2 },
+                { q: t.faq.q3, a: t.faq.a3 },
+                { q: t.faq.q4, a: t.faq.a4 },
+                { q: t.faq.q5, a: t.faq.a5 },
+                { q: t.faq.q6, a: t.faq.a6 }
             ];
             
             return (
                  <section id="faq" className="py-20 bg-stone-50">
                     <div className="max-w-4xl mx-auto px-4">
-                        <h2 className="text-3xl font-bold text-center mb-10 text-slate-900">常見問答</h2>
+                        <h2 className="text-3xl font-bold text-center mb-10 text-slate-900">{t.faq.title}</h2>
                         <div className="grid gap-6">
                             {faqs.map((item, i) => (
                                 <div key={i} className="bg-white p-6 rounded-lg shadow-sm">
@@ -441,7 +575,7 @@
             )
         }
 
-        const Pricing = ({ onLineClick, onViewChange }) => {
+        const Pricing = ({ onLineClick, onViewChange, t, lang }) => {
             const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
             useEffect(() => {
                 const targetDate = new Date();
@@ -465,115 +599,100 @@
                     <div className="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-amber-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
                     <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
                     <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
-                        <div className="inline-block bg-red-600 text-white px-6 py-2 rounded-full text-base font-bold mb-6 animate-pulse-slow shadow-[0_0_15px_rgba(220,38,38,0.7)]">超級早鳥優惠截止倒數！ {String(timeLeft.days).padStart(2,'0')}天 {String(timeLeft.hours).padStart(2,'0')}時 {String(timeLeft.minutes).padStart(2,'0')}分 {String(timeLeft.seconds).padStart(2,'0')}秒</div>
-                        <h2 className="text-3xl md:text-5xl font-bold mb-6 serif-font">最終定價與席次鎖定</h2>
-                        <p className="text-lg text-slate-300 mb-10 max-w-2xl mx-auto">本團人數上限僅 16 席！體驗匠人精神，品嚐純粹風味。</p>
+                        <div className="inline-block bg-red-600 text-white px-6 py-2 rounded-full text-base font-bold mb-6 animate-pulse-slow shadow-[0_0_15px_rgba(220,38,38,0.7)]">{t.pricing.countdown} {String(timeLeft.days).padStart(2,'0')}{t.pricing.timeUnits.d} {String(timeLeft.hours).padStart(2,'0')}{t.pricing.timeUnits.h} {String(timeLeft.minutes).padStart(2,'0')}{t.pricing.timeUnits.m} {String(timeLeft.seconds).padStart(2,'0')}{t.pricing.timeUnits.s}</div>
+                        <h2 className="text-3xl md:text-5xl font-bold mb-6 serif-font">{t.pricing.title}</h2>
+                        <p className="text-lg text-slate-300 mb-10 max-w-2xl mx-auto">{t.pricing.sub}</p>
                         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 md:p-8 w-full max-w-2xl mx-auto border border-white/20 mb-8">
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-                                <div className="p-4 bg-white/5 rounded border border-white/10"><div className="text-slate-400 text-xs uppercase mb-1">官方牌價 (二人一室)</div><div className="text-2xl font-bold">NT$ 56,500 <span className="text-sm text-amber-400 font-normal block mt-1">{`{刷卡需加2%}`}</span></div></div>
-                                <div className="p-4 bg-amber-600/20 rounded border border-amber-500/50 relative overflow-hidden"><div className="absolute top-0 right-0 bg-red-500 text-xs px-2 py-0.5">熱門</div><div className="text-amber-300 text-xs uppercase mb-1">💥 方案 A：超級早鳥 (95折)</div><div className="text-2xl font-bold text-amber-400">NT$ 53,675 <span className="text-sm text-white/80 font-normal block mt-1">{`{刷卡需加2%}`}</span></div><div className="text-xs text-amber-200/70 mt-1">限額 10 名</div></div>
-                                <div className="p-4 bg-blue-600/20 rounded border border-blue-500/50 md:col-span-2"><div className="text-blue-300 text-xs uppercase mb-1">✨ 方案 B：雙人同行優惠</div><div className="text-2xl font-bold text-blue-100">NT$ 55,500 <span className="text-sm font-normal text-slate-300">/ 人</span> <span className="text-sm text-amber-400 font-normal ml-2">{`{刷卡需加2%}`}</span></div><div className="text-xs text-blue-200/70 mt-1">每人現折 $1,000</div></div>
+                                <div className="p-4 bg-white/5 rounded border border-white/10"><div className="text-slate-400 text-xs uppercase mb-1">{t.pricing.official}</div><div className="text-2xl font-bold">NT$ 56,500 <span className="text-sm text-amber-400 font-normal block mt-1">{t.card}</span></div></div>
+                                <div className="p-4 bg-amber-600/20 rounded border border-amber-500/50 relative overflow-hidden"><div className="absolute top-0 right-0 bg-red-500 text-xs px-2 py-0.5">HOT</div><div className="text-amber-300 text-xs uppercase mb-1">💥 {t.pricing.early}</div><div className="text-2xl font-bold text-amber-400">NT$ 53,675 <span className="text-sm text-white/80 font-normal block mt-1">{t.card}</span></div><div className="text-xs text-amber-200/70 mt-1">{t.pricing.earlyNote}</div></div>
+                                <div className="p-4 bg-blue-600/20 rounded border border-blue-500/50 md:col-span-2"><div className="text-blue-300 text-xs uppercase mb-1">✨ {t.pricing.double}</div><div className="text-2xl font-bold text-blue-100">NT$ 55,500 <span className="text-sm font-normal text-slate-300">{t.pricing.perPerson}</span> <span className="text-sm text-amber-400 font-normal ml-2">{t.card}</span></div><div className="text-xs text-blue-200/70 mt-1">{t.pricing.doubleNote}</div></div>
                              </div>
-                             <div className="mt-6 p-4 bg-slate-800/50 rounded text-left border border-slate-700"><h4 className="text-amber-400 font-bold mb-2 flex items-center gap-2"><Plane className="w-4 h-4"/> ✈️ 自理機票價格 (Join Local)</h4><p className="text-sm text-slate-300 mb-2">若選擇自行購買國際段機票，將扣除機票及稅金。</p><div className="text-xl font-bold text-white">最終費用：NT$ 44,300 <span className="text-sm font-normal text-slate-400">/ 人</span> <span className="text-sm text-amber-400 font-normal ml-2">{`{刷卡需加2%}`}</span></div></div>
-                             <p className="text-xs text-slate-400 mt-4 text-left">* 方案 A 與 B 不可疊加使用。</p>
+                             <div className="mt-6 p-4 bg-slate-800/50 rounded text-left border border-slate-700"><h4 className="text-amber-400 font-bold mb-2 flex items-center gap-2"><Plane className="w-4 h-4"/> {t.pricing.joinLocal}</h4><p className="text-sm text-slate-300 mb-2">{t.pricing.joinDesc}</p><div className="text-xl font-bold text-white">{t.pricing.finalPrice} NT$ 44,300 <span className="text-sm font-normal text-slate-400">{t.pricing.perPerson}</span> <span className="text-sm text-amber-400 font-normal ml-2">{t.card}</span></div></div>
+                             <p className="text-xs text-slate-400 mt-4 text-left">{t.pricing.note}</p>
                         </div>
-                        <div className="bg-amber-900/50 p-4 rounded-lg inline-block mb-8 border border-amber-700"><span className="text-amber-300 font-bold">🎁 SAKEMARU加碼禮：</span> 當地釀造體驗嚴選酒款一瓶！</div>
+                        <div className="bg-amber-900/50 p-4 rounded-lg inline-block mb-8 border border-amber-700"><span className="text-amber-300 font-bold">{t.pricing.bonus}</span> {t.pricing.bonusDesc}</div>
                         <div className="flex flex-col gap-4 max-w-md mx-auto">
-                            <button onClick={onLineClick} className="w-full py-4 bg-[#06c755] hover:bg-[#05b54d] text-white rounded-lg font-bold text-lg transition-all shadow-lg flex justify-center items-center gap-2"><img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" className="w-6 h-6 bg-white rounded-full p-0.5" alt="LINE" /><span>LINE 官方帳號諮詢</span></button>
-                             <a href="https://www.facebook.com/sakemaru.tw?locale=zh_TW" target="_blank" rel="noopener noreferrer" className="w-full py-4 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-lg font-bold text-lg transition-all shadow-lg flex justify-center items-center gap-2"><Facebook className="w-6 h-6" /><span>Facebook 粉絲專頁</span></a>
-                            <a href="https://www.instagram.com/sakemaru_tw/" target="_blank" rel="noopener noreferrer" className="w-full py-4 bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] hover:opacity-90 text-white rounded-lg font-bold text-lg transition-all shadow-lg flex justify-center items-center gap-2"><Instagram className="w-6 h-6" /><span>Instagram 官方帳號</span></a>
-                            <div className="w-full py-4 bg-slate-700 text-white rounded-lg font-bold text-lg shadow-lg flex justify-center items-center gap-2 cursor-default"><Phone className="w-6 h-6" /><span>撥打諮詢 (02-2700-0903)</span></div>
-                            <button onClick={() => onViewChange('seminar')} className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg font-bold text-lg shadow-lg flex justify-center items-center gap-2 animate-pulse"><Users className="w-6 h-6" /><span>行前說明會報名</span></button>
+                            <button onClick={onLineClick} className="w-full py-4 bg-[#06c755] hover:bg-[#05b54d] text-white rounded-lg font-bold text-lg transition-all shadow-lg flex justify-center items-center gap-2"><img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" className="w-6 h-6 bg-white rounded-full p-0.5" alt="LINE" /><span>{t.pricing.btnLine}</span></button>
+                             <a href="https://www.facebook.com/sakemaru.tw?locale=zh_TW" target="_blank" rel="noopener noreferrer" className="w-full py-4 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-lg font-bold text-lg transition-all shadow-lg flex justify-center items-center gap-2"><Facebook className="w-6 h-6" /><span>{t.pricing.btnFb}</span></a>
+                            <a href="https://www.instagram.com/sakemaru_tw/" target="_blank" rel="noopener noreferrer" className="w-full py-4 bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] hover:opacity-90 text-white rounded-lg font-bold text-lg transition-all shadow-lg flex justify-center items-center gap-2"><Instagram className="w-6 h-6" /><span>{t.pricing.btnIg}</span></a>
+                            <div className="w-full py-4 bg-slate-700 text-white rounded-lg font-bold text-lg shadow-lg flex justify-center items-center gap-2 cursor-default"><Phone className="w-6 h-6" /><span>{t.pricing.btnCall}</span></div>
+                            <button onClick={() => onViewChange('seminar')} className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg font-bold text-lg shadow-lg flex justify-center items-center gap-2 animate-pulse"><Users className="w-6 h-6" /><span>{t.pricing.btnSeminar}</span></button>
                         </div>
                     </div>
                 </section>
             );
         };
 
-        const Footer = () => {
+        const Footer = ({ t }) => {
             return (
                 <footer className="bg-stone-900 text-stone-400 py-12 border-t border-stone-800">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            <div><span className="text-2xl font-bold text-white japanese-font tracking-widest">SAKEMARU</span><p className="mt-4 text-sm leading-relaxed">SAKEMARU 清酒職人朝聖之路。<br/>為確保所有獨家行程皆能順利執行，本公司將依據<strong>《國內／國外旅遊定型化契約》</strong>之規定，並以旅客權益為首要考量，於必要時進行行程調整。</p></div>
-                            <div><h4 className="text-white font-bold mb-4">聯絡資訊</h4><ul className="space-y-2 text-sm"><li>電話諮詢：02-2700-0903</li><li>聯絡地址：台北市大安區瑞安街226號</li><li>客服信箱：support@sakemaru.me</li><li><a href="https://sakemaru.me/tw" target="_blank" rel="noopener noreferrer" className="hover:text-amber-500 transition-colors">官方網站：sakemaru.me/tw</a></li></ul><div className="mt-4 pt-4 border-t border-stone-700"><p className="text-xs text-stone-500">日紳旅遊</p><p className="text-xs text-stone-500">旅行社品質保障協會字第北2190號‧交觀甲字第7830號</p></div></div>
-                            <div><h4 className="text-white font-bold mb-4">注意事項</h4><ul className="space-y-2 text-xs"><li><strong>旅行業契約責任險 250萬，醫療險 20萬。</strong></li><li>最低成團人數 16 人。</li></ul></div>
+                            <div><span className="text-2xl font-bold text-white japanese-font tracking-widest">SAKEMARU</span><p className="mt-4 text-sm leading-relaxed whitespace-pre-line">{t.footer.desc}</p></div>
+                            <div><h4 className="text-white font-bold mb-4">{t.footer.contact}</h4><ul className="space-y-2 text-sm"><li>{t.footer.tel}：02-2700-0903</li><li>{t.footer.addr}：{t.footer.addrVal}</li><li>support@sakemaru.me</li><li><a href="https://sakemaru.me/tw" target="_blank" rel="noopener noreferrer" className="hover:text-amber-500 transition-colors">{t.footer.official}：sakemaru.me/tw</a></li></ul><div className="mt-4 pt-4 border-t border-stone-700"><p className="text-xs text-stone-500">{t.footer.partner}</p><p className="text-xs text-stone-500">{t.footer.license}</p></div></div>
+                            <div><h4 className="text-white font-bold mb-4">{t.footer.note}</h4><ul className="space-y-2 text-xs"><li><strong>{t.footer.insure}</strong></li><li>{t.footer.age}</li></ul></div>
                         </div>
                         <div className="border-t border-stone-800 mt-12 pt-8 text-center text-xs flex flex-col md:flex-row justify-between items-center relative">
-                            <span>&copy; 2025 SAKEMARU 清酒職人朝聖之路. All rights reserved.</span>
-                            {/* Admin login removed as we are using Google Sheets for backend */}
-                            <span className="mt-4 md:mt-0 opacity-70">Design by 獅日子有限公司</span>
+                            <span>{t.footer.copy}</span>
+                            <span className="mt-4 md:mt-0 opacity-70">{t.footer.design}</span>
                         </div>
                     </div>
                 </footer>
             );
         };
 
-        // --- Seminar Page Component (Modified for Google Forms Iframe) ---
-        const SeminarPage = ({ onBack }) => {
-            useEffect(() => {
-                window.scrollTo(0, 0);
-            }, []);
+        const SeminarPage = ({ onBack, t }) => {
+            useEffect(() => { window.scrollTo(0, 0); }, []);
 
             return (
                 <div className="min-h-screen bg-stone-50 pt-20">
                     <div className="relative bg-slate-900 text-white py-20 px-4 overflow-hidden">
                         <div className="absolute inset-0 opacity-40"><img src="https://i.postimg.cc/zXcJSxct/niang-zao-gong-cheng1.jpg" alt="酒造背景" className="w-full h-full object-cover" /></div>
                         <div className="max-w-4xl mx-auto relative z-10 text-center">
-                            <span className="inline-block px-3 py-1 border border-amber-400 text-amber-400 rounded-full text-sm mb-4 tracking-wider">SAKEMARU 限定活動</span>
-                            <h1 className="text-3xl md:text-5xl font-bold mb-6 serif-font">清酒職人朝聖之路｜行前品飲說明會</h1>
-                            <p className="text-lg text-slate-200 mb-8 max-w-2xl mx-auto">為了讓您更安心地踏上這趟旅程，我們特別舉辦行前品飲會。<br/>現場品嚐三大酒造銘柄，連線杜氏解說，預覽獨家體驗。</p>
-                            <div className="flex flex-wrap justify-center gap-4 text-sm font-bold text-amber-300"><span className="flex items-center gap-1"><Wine className="w-4 h-4"/> 品飲三大酒造</span><span className="flex items-center gap-1"><Video className="w-4 h-4"/> 現場連線互動</span><span className="flex items-center gap-1"><Users className="w-4 h-4"/> 限額席次</span></div>
+                            <span className="inline-block px-3 py-1 border border-amber-400 text-amber-400 rounded-full text-sm mb-4 tracking-wider">{t.seminar.tag}</span>
+                            <h1 className="text-3xl md:text-5xl font-bold mb-6 serif-font">{t.seminar.title}</h1>
+                            <p className="text-lg text-slate-200 mb-8 max-w-2xl mx-auto">{t.seminar.sub}</p>
+                            <div className="flex flex-wrap justify-center gap-4 text-sm font-bold text-amber-300"><span className="flex items-center gap-1"><Wine className="w-4 h-4"/> {t.seminar.f1}</span><span className="flex items-center gap-1"><Video className="w-4 h-4"/> {t.seminar.f2}</span><span className="flex items-center gap-1"><Users className="w-4 h-4"/> {t.seminar.f3}</span></div>
                         </div>
                     </div>
 
                     <div className="max-w-5xl mx-auto px-4 py-12 grid grid-cols-1 lg:grid-cols-2 gap-12">
                         <div className="space-y-8">
                             <div className="bg-white p-6 rounded-xl shadow-sm border border-stone-200">
-                                <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2"><Info className="w-5 h-5 text-amber-600"/> 活動資訊</h3>
+                                <h3 className="text-xl font-bold text-slate-900 mb-4 flex items-center gap-2"><Info className="w-5 h-5 text-amber-600"/> {t.seminar.infoTitle}</h3>
                                 <ul className="space-y-4 text-slate-600">
-                                    <li className="flex items-start gap-3"><Calendar className="w-5 h-5 text-slate-400 flex-shrink-0 mt-0.5"/><div><span className="font-bold text-slate-800 block">時間</span>2025年11月29日 (六) 14:00 - 16:00</div></li>
-                                    <li className="flex items-start gap-3"><MapPin className="w-5 h-5 text-slate-400 flex-shrink-0 mt-0.5"/><div><span className="font-bold text-slate-800 block">地點</span>台北市大安區瑞安街226號 (SAKEMARU 台灣總部)</div></li>
-                                    <li className="flex items-start gap-3"><div className="w-5 h-5 flex items-center justify-center text-slate-400 font-serif font-bold">$</div><div><span className="font-bold text-slate-800 block">費用</span>NT$ 200 / 人 (含三款清酒品飲與小點)</div></li>
+                                    <li className="flex items-start gap-3"><Calendar className="w-5 h-5 text-slate-400 flex-shrink-0 mt-0.5"/><div><span className="font-bold text-slate-800 block">{t.seminar.time}</span>{t.seminar.timeVal}</div></li>
+                                    <li className="flex items-start gap-3"><MapPin className="w-5 h-5 text-slate-400 flex-shrink-0 mt-0.5"/><div><span className="font-bold text-slate-800 block">{t.seminar.loc}</span>{t.seminar.locVal}</div></li>
+                                    <li className="flex items-start gap-3"><div className="w-5 h-5 flex items-center justify-center text-slate-400 font-serif font-bold">$</div><div><span className="font-bold text-slate-800 block">{t.seminar.fee}</span>{t.seminar.feeVal}</div></li>
                                 </ul>
                             </div>
-                            <div className="bg-white p-6 rounded-xl shadow-sm border border-stone-200"><h3 className="text-xl font-bold text-slate-900 mb-4">活動亮點</h3><ul className="list-disc list-inside space-y-2 text-slate-600"><li><strong>三大酒造巡禮前哨戰：</strong>搶先品嚐山名、白杉、池田酒造代表作。</li><li><strong>杜氏連線 QA：</strong>透過視訊與日本酒造職人面對面，詢問釀造細節與體驗內容。</li><li><strong>行程深度解析：</strong>由專業顧問詳細拆解每日亮點，消除您對高價團的所有疑慮。</li></ul></div>
+                            <div className="bg-white p-6 rounded-xl shadow-sm border border-stone-200"><h3 className="text-xl font-bold text-slate-900 mb-4">{t.seminar.highlightTitle}</h3><ul className="list-disc list-inside space-y-2 text-slate-600"><li>{t.seminar.h1}</li><li>{t.seminar.h2}</li><li>{t.seminar.h3}</li></ul></div>
                             <div className="rounded-xl overflow-hidden shadow-sm border border-stone-200 h-64"><iframe src="https://www.google.com/maps?q=台北市大安區瑞安街226號&output=embed" width="100%" height="100%" style={{border:0}} allowFullScreen="" loading="lazy"></iframe></div>
                         </div>
 
                         <div className="bg-white p-4 rounded-xl shadow-lg border-t-4 border-amber-600 sticky top-24">
-                            <h2 className="text-2xl font-bold text-slate-900 mb-4 text-center">立即報名說明會</h2>
+                            <h2 className="text-2xl font-bold text-slate-900 mb-4 text-center">{t.seminar.formTitle}</h2>
                             <div className="w-full overflow-hidden rounded bg-gray-50 border border-gray-200" style={{ height: '866px' }}>
-                                {/* Google Form Iframe Container */}
-                                <iframe 
-                                    src={GOOGLE_FORM_URL}
-                                    width="100%" 
-                                    height="100%" 
-                                    frameBorder="0" 
-                                    marginHeight="0" 
-                                    marginWidth="0"
-                                    title="Google Form Registration"
-                                >
-                                    載入中...
-                                </iframe>
+                                <iframe src={GOOGLE_FORM_URL} width="100%" height="100%" frameBorder="0" marginHeight="0" marginWidth="0" title="Google Form Registration">Loading...</iframe>
                             </div>
-                            <div className="text-center mt-4"><button type="button" onClick={onBack} className="text-sm text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1 mx-auto"><Home className="w-4 h-4"/> 返回官網</button></div>
+                            <div className="text-center mt-4"><button type="button" onClick={onBack} className="text-sm text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1 mx-auto"><Home className="w-4 h-4"/> {t.seminar.back}</button></div>
                         </div>
                     </div>
                 </div>
             );
         };
 
-        const MainPage = ({ onLineClick, onViewChange }) => {
+        const MainPage = ({ onLineClick, onViewChange, t, lang }) => {
             return (
                 <div className="animate-fade-in">
-                    <Hero onViewChange={onViewChange} />
-                    <Highlights />
-                    <Breweries />
-                    <Itinerary />
-                    <InfoSection />
-                    <FAQ />
-                    <Pricing onLineClick={onLineClick} onViewChange={onViewChange} />
+                    <Hero onViewChange={onViewChange} t={t} />
+                    <Highlights t={t} />
+                    <Breweries t={t} />
+                    <Itinerary t={t} lang={lang} />
+                    <InfoSection t={t} />
+                    <FAQ t={t} />
+                    <Pricing onLineClick={onLineClick} onViewChange={onViewChange} t={t} lang={lang} />
                 </div>
             );
         };
@@ -581,13 +700,16 @@
         const App = () => {
             const [isModalOpen, setIsModalOpen] = useState(false);
             const [currentView, setCurrentView] = useState('main');
+            const [lang, setLang] = useState('zh-TW');
+
+            const t = translations[lang];
 
             return (
-                <div className="antialiased selection:bg-amber-200 selection:text-amber-900">
-                    <Header onViewChange={setCurrentView} currentView={currentView} />
-                    {currentView === 'main' && <MainPage onLineClick={() => setIsModalOpen(true)} onViewChange={setCurrentView} />}
-                    {currentView === 'seminar' && <SeminarPage onBack={() => setCurrentView('main')} />}
-                    <Footer />
+                <div className={`antialiased selection:bg-amber-200 selection:text-amber-900 ${lang === 'en' ? 'en-font' : ''}`}>
+                    <Header onViewChange={setCurrentView} currentView={currentView} lang={lang} setLang={setLang} t={t} />
+                    {currentView === 'main' && <MainPage onLineClick={() => setIsModalOpen(true)} onViewChange={setCurrentView} t={t} lang={lang} />}
+                    {currentView === 'seminar' && <SeminarPage onBack={() => setCurrentView('main')} t={t} />}
+                    <Footer t={t} />
                     <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
                         <div className="text-center"><h3 className="text-xl font-bold text-slate-900 mb-4">加入 LINE 官方帳號</h3><p className="text-sm text-slate-600 mb-4">請掃描下方 QR Code 或點擊按鈕加入好友洽詢席次。</p><div className="bg-white p-2 border border-gray-200 rounded-lg inline-block mb-4"><img src="https://i.postimg.cc/m23nFYZ9/jie-tu-2025-11-12-shang-wu11-08-17.png" alt="LINE QR Code" className="w-48 h-48 object-contain" /></div><a href="https://lin.ee/yNtFdhG" target="_blank" rel="noopener noreferrer" className="block w-full py-3 bg-[#06C755] hover:bg-[#05b54d] text-white rounded font-bold transition-colors">一鍵加入 LINE 好友</a></div>
                     </Modal>
