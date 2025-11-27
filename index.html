@@ -27,7 +27,53 @@
             background-color: #fafaf9; /* Stone-50 */
             color: #1c1917; /* Stone-900 */
             -webkit-tap-highlight-color: transparent; /* iOS click fix */
+            /* padding-bottom 調整：預留給底部固定警語的空間 */
+            padding-bottom: 12vh; 
         }
+        @media (min-width: 768px) {
+             body { padding-bottom: 10vh; } 
+        }
+
+        /* 警語區塊專用樣式 */
+        .alcohol-warning-container {
+            height: 12vh; /* 手機版高度：螢幕 12% */
+            min-height: 60px;
+            background-color: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px; /* 圖文間距 */
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            z-index: 9999;
+        }
+        .alcohol-warning-img {
+            height: 100%; /* 圖片高度佔橫幅的 80% */
+            width: auto;
+            object-fit: contain;
+        }
+        .alcohol-warning-text {
+            color: #FFF;
+            font-weight: bold;
+            font-size: 5vw; /* 手機版字體大小隨螢幕縮放 */
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        /* 電腦版調整 */
+        @media (min-width: 768px) {
+            .alcohol-warning-container {
+                height: 10vh; /* 電腦版高度：螢幕 10% */
+                min-height: 80px;
+                gap: 30px;
+            }
+            .alcohol-warning-text {
+                font-size: 2.5rem; /* 電腦版固定大字體 */
+            }
+        }
+
         .en-font {
             font-family: 'Playfair Display', serif;
         }
@@ -67,13 +113,20 @@
         const { useState, useEffect, useRef } = React;
 
         // --- CONFIGURATION ---
-        const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSey9VUEv7nN8J3_0_jLCN11jvkkHIqDd21tX_sfDQ4399vKWg/viewform?embedded=true";
+        const GOOGLE_FORM_SEMINAR_URL = "https://docs.google.com/forms/d/e/1FAIpQLSey9VUEv7nN8J3_0_jLCN11jvkkHIqDd21tX_sfDQ4399vKWg/viewform?embedded=true";
+        const GOOGLE_FORM_PAYMENT_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdrRDoSWrh5nEQPJXjWgKb56hLOGw_ivFg08kZsWZZkvPv0rA/viewform?embedded=true";
+        
+        // Updated Logo
+        const LOGO_URL = "https://i.postimg.cc/KjLwnYRD/42985006-0cbc-4951-a736-3d508fd7d6c0.png";
+        
+        // Warning Icon (Sign only)
+        const WARNING_ICON_URL = "https://i.postimg.cc/fLF98KgN/wei-ming-ming-she-ji-(7).png";
 
         // --- TRANSLATIONS ---
         const translations = {
             'zh-TW': {
-                nav: { highlights: "產品優勢", breweries: "三大酒造", itinerary: "每日行程", pricing: "價格方案", faq: "常見問答", seminar: "行前說明會", book: "立即預約" },
-                hero: { subtitle: "SAKEMARU 2026 首發限定團", title: "清酒職人朝聖之路", sub: "三大酒造 × 獨家釀造體驗 5 日", desc: "全台僅限 16 席｜與杜氏親手參與釀造工序", date: "2026/03/07 - 03/11", explore: "探索行程", reserve: "搶先預約", seminarBtn: "行前說明會報名" },
+                nav: { highlights: "產品優勢", breweries: "三大酒造", itinerary: "每日行程", pricing: "價格方案", faq: "常見問答", seminar: "行程說明會報名", book: "立即預約" },
+                hero: { subtitle: "SAKEMARU 2026 首發限定團", title: "清酒職人朝聖之路", sub: "三大酒造 × 獨家釀造體驗 5 日", desc: "全台僅限 16 席｜與杜氏親手參與釀造工序", date: "2026/03/07 - 03/11", explore: "探索行程", reserve: "搶先預約", seminarBtn: "行程說明會報名", seminarBtnSub: "NT$ 200 / 人 (含三款清酒品飲與小點)" },
                 highlights: { title: "產品優勢：您值得更深度的日本", desc: "告別走馬看花，這是一堂關於風土、職人與美學的實踐課。", 
                     f1: { t: "傳承之心：工藝親炙", d: "超越觀光客視角。親手參與洗米與搬運蒸米，深入職人專注的世界，體驗釀造的溫度。" },
                     f2: { t: "療癒美學：電影感畫面", d: "避開喧囂。搭乘神隱少女般的青松號列車，胯下觀賞飛龍在天，入住伊根舟屋旁的海之京都。" },
@@ -87,7 +140,7 @@
                 },
                 itinerary: { title: "五日深度行程表", 
                     d1: { t: "台北 → 大阪關西 → 達摩勝尾寺 → 丹波篠山", am: "集合於桃園機場，搭乘泰越捷航空 VZ566 飛往大阪關西機場 (07:50-11:25)。", pm: "前往秘境【達摩勝尾寺】，欣賞遍佈境內的「達摩不倒翁」，祈求勝利與吉祥。", night: "入住【丹波篠山和藏格蘭比利歐酒店或同級】，享用半會席自助餐 +「90分鐘酒水無限暢飲」。", meal: {b: "X", l: "機上美食", d: "半會席自助餐+酒水暢飲"}, hotel: "丹波篠山和藏格蘭比利歐酒店 (天然溫泉) 或同級" },
-                    d2: { t: "山名酒造 → 與酒造社長的美酒午宴 → 觀光列車青松號", am: "★獨家體驗【山名酒造見學】：親身參與釀造的起點「洗米」，感受近300年傳承的職人精神，為清酒的純淨風味打下最關鍵的基礎。", l_text: "酒造社長親臨同桌用餐，招待美酒並親自解說，享用在地特色蕎麥餐。", pm: "搭乘丹鐵觀光列車青松號，行駛於由良川橋梁，欣賞酷似神隱少女海中列車的夢幻景觀。", stay: "前往天橋立飯店或京都宮津美居溫泉度假酒店或同級。", meal: {b: "飯店內", l: "特色蕎麥餐", d: "會席料理或百匯自助餐"}, hotel: "天橋立飯店 或 京都宮津美居溫泉度假酒店 或同級" },
+                    d2: { t: "山名酒造 → 與酒造社長的美酒午宴 → 觀光列車青松號", am: "★獨家體驗【山名酒造見學】：親身參與釀造的起點「洗米」，感受近300年傳承的職人精神，為清酒的純淨風味打下最關鍵的基礎。", l_text: "酒造社長親臨同桌用餐，招待美酒並親自解說，享用在地特色蕎麥餐。", pm: "搭乘丹鐵觀光列車青松號，行駛於由良川橋梁，欣賞酷似神隱少女海中列車的夢幻景觀。", stay: "前往天橋立飯店或京都宮津美居溫泉度假酒店或同級。", meal: {b: "飯店內", l: "特色蕎麥風味餐", d: "會席料理或百匯自助餐"}, hotel: "天橋立飯店 或 京都宮津美居溫泉度假酒店 或同級" },
                     d3: { t: "伊根灣遊船 → 白杉酒造 → 天橋立纜車", am: "搭乘【伊根灣遊覽船】，平穩周遊伊根灣，觀察舟屋構造，海鷗伴遊。", pm: "★獨家體驗【白杉酒造見學】：參訪神秘的「戰地洞窟」，探訪全食用米釀造秘密並試飲。", sight: "搭乘天橋立觀光纜車前往【傘松公園展望台】，體驗「胯下觀景」，俯瞰天橋立如飛龍在天。", meal: {b: "飯店內", l: "天橋立風味餐", d: "會席料理或百匯自助餐"}, hotel: "天橋立飯店 或 京都宮津美居溫泉度假酒店 或同級" },
                     d4: { t: "池田酒造 → 舞鶴港海鮮市場 → 大阪市區", am: "★獨家體驗【池田酒造見學】：位於舞鶴市，體驗「洗米＋蒸熟米搬運」，感受職人熱情。", l_text: "前往【舞鶴港海鮮市場】，日本海最大規模市場，享用直送海鮮日式御膳。", pm: "返回大阪市區飯店，入住Holiday Inn Express 御堂筋或MOXY大阪新梅田或同級，自由活動（推薦前往心齋橋）。", meal: {b: "飯店內", l: "海鮮日式御膳", d: "方便逛街，敬請自理"}, hotel: "Holiday Inn Express 御堂筋 或 MOXY大阪新梅田 或同級" },
                     d5: { t: "大阪 → 關西機場 → 台北", am: "享受飯店早餐，把握最後自由活動時光。", pm: "前往大阪關西機場，搭乘 VZ567 (12:25-14:25) 返回台北溫暖的家。", meal: {b: "飯店內", l: "機上美食", d: "X"}, hotel: "溫暖的家" },
@@ -100,7 +153,7 @@
                     i2: "房型說明：日本飯店多為兩小床房型。若三人同行，飯店安排二小床+一行軍床或三人鋪床，建議第三人補單房差。",
                     i3: "電壓提醒：日本電壓為 100 伏特，若攜帶電器用品，請注意是否符合當地使用。",
                     i4: "餐食需求：若您有食物過敏、不吃牛肉、不吃生食、不吃海鮮甲殼類等特殊餐飲需求，請務必於出發前至少 5 天（不含假日）告知承辦人員。",
-                    // Visual Gallery Items (No Soba)
+                    // Gallery Translations
                     gallery: [
                         { title: "伊根舟屋", desc: "海上浮城，品味寧靜漁村生活" },
                         { title: "天橋立", desc: "胯下觀景，顛倒視角成就飛龍在天" },
@@ -125,15 +178,16 @@
                     official: "官方牌價 (二人一室)", early: "方案 A：超級早鳥 (95折)", earlyNote: "限額 10 名", double: "方案 B：雙人同行優惠", doubleNote: "每人現折 $1,000",
                     joinLocal: "✈️ 自理機票價格 (Join Local)", joinDesc: "若選擇自行購買國際段機票，將扣除機票及稅金。", finalPrice: "最終費用：", perPerson: "/ 人",
                     note: "* 方案 A 與 B 不可疊加使用。", bonus: "🎁 SAKEMARU加碼禮：", bonusDesc: "當地釀造體驗嚴選酒款一瓶！",
-                    btnLine: "LINE 官方帳號諮詢", btnFb: "Facebook 粉絲專頁", btnIg: "Instagram 官方帳號", btnCall: "撥打諮詢 (02-2700-0903)", btnSeminar: "行前說明會報名",
-                    timeUnits: { d: "天", h: "時", m: "分", s: "秒" }
+                    btnLine: "LINE 官方帳號諮詢", btnFb: "Facebook粉絲專頁諮詢", btnIg: "Instagram官方帳號諮詢", btnCall: "撥打諮詢 (02-2700-0903)", btnSeminar: "行程說明會報名", btnSeminarSub: "NT$ 200 / 人 (含三款清酒品飲與小點)",
+                    timeUnits: { d: "天", h: "時", m: "分", s: "秒" },
+                    modalTitle: "請選擇付款方式", credit: "線上刷卡", creditNote: "刷卡請洽專員諮詢", transfer: "銀行匯款"
                 },
                 footer: { desc: "SAKEMARU 清酒職人朝聖之路。\n為確保所有獨家行程皆能順利執行，本公司將依據《國內／國外旅遊定型化契約》之規定，並以旅客權益為首要考量，於必要時進行行程調整。",
                     contact: "聯絡資訊", tel: "電話諮詢", addr: "聯絡地址", addrVal: "台北市大安區瑞安街226號", official: "官方網站", partner: "日紳旅遊", license: "旅行社品質保障協會字第北2190號‧交觀甲字第7830號",
                     note: "注意事項", insure: "旅行業契約責任險 250萬，醫療險 20萬。", age: "最低成團人數 16 人。",
                     copy: "© 2025 SAKEMARU 清酒職人朝聖之路. All rights reserved.", design: "Design by 獅日子有限公司"
                 },
-                seminar: { tag: "SAKEMARU 限定活動", title: "清酒職人朝聖之路｜行前品飲說明會", sub: "為了讓您更安心地踏上這趟旅程，我們特別舉辦行前品飲會。現場品嚐三大酒造銘柄，連線杜氏解說，預覽獨家體驗。",
+                seminar: { tag: "SAKEMARU 限定活動", title: "清酒職人朝聖之路｜行程說明會報名", sub: "為了讓您更安心地踏上這趟旅程，我們特別舉辦行前品飲會。現場品嚐三大酒造銘柄，連線杜氏解說，預覽獨家體驗。",
                     f1: "品飲三大酒造", f2: "現場連線互動", f3: "限額席次",
                     infoTitle: "活動資訊", time: "時間", timeVal: "2025年12月06日 (六) 14:00 - 16:00", loc: "地點", locVal: "台北市大安區瑞安街226號 (SAKEMARU 瑞安店)", fee: "費用", feeVal: "NT$ 200 / 人 (含三款清酒品飲與小點)",
                     highlightTitle: "活動亮點", h1: "三大酒造巡禮前哨戰：搶先品嚐山名、白杉、池田酒造代表作。", h2: "杜氏連線 QA：透過視訊與日本酒造職人面對面，詢問釀造細節與體驗內容。", h3: "行程深度解析：由專業顧問詳細拆解每日亮點，消除您對高價團的所有疑慮。",
@@ -142,8 +196,8 @@
                 card: "刷卡需加2%"
             },
             'en': {
-                nav: { highlights: "Highlights", breweries: "Breweries", itinerary: "Itinerary", pricing: "Pricing", faq: "FAQ", seminar: "Pre-trip Seminar", book: "Book Now" },
-                hero: { subtitle: "SAKEMARU 2026 Exclusive Tour", title: "Sake Artisan Pilgrimage", sub: "3 Breweries x Exclusive Brewing Experience 5 Days", desc: "Limited to 16 Seats | Hands-on Brewing with Toji", date: "Mar 07 - Mar 11, 2026", explore: "Explore", reserve: "Reserve", seminarBtn: "Join Seminar" },
+                nav: { highlights: "Highlights", breweries: "Breweries", itinerary: "Itinerary", pricing: "Pricing", faq: "FAQ", seminar: "Seminar Registration", book: "Book Now" },
+                hero: { subtitle: "SAKEMARU 2026 Exclusive Tour", title: "Sake Artisan Pilgrimage", sub: "3 Breweries x Exclusive Brewing Experience 5 Days", desc: "Limited to 16 Seats | Hands-on Brewing with Toji", date: "Mar 07 - Mar 11, 2026", explore: "Explore", reserve: "Reserve", seminarBtn: "Seminar Registration", seminarBtnSub: "NT$ 200 / person (Includes 3 sakes & snacks)" },
                 highlights: { title: "Core Values: You Deserve a Deeper Japan", desc: "Say goodbye to superficial tours. This is a practical lesson on terroir, craftsmanship, and aesthetics.", 
                     f1: { t: "Heritage: Hands-on Craft", d: "Beyond tourism. Participate in rice washing and steaming transport, diving into the artisan's world to experience the warmth of brewing." },
                     f2: { t: "Aesthetics: Cinematic Views", d: "Escape the noise. Ride the 'Spirited Away' Aomatsu train, view the Flying Dragon at Amanohashidate, and stay by the Funaya boat houses." },
@@ -156,9 +210,9 @@
                     b3: { name: "Ikeda Brewery", desc: "Located in Maizuru, the 'Kyoto by the Sea'. Run by a craftsman couple. You will participate in the passionate 'Steamed Rice Transport' and rice washing, feeling the persistence of sake birth with your body.", tag: "Steamed Rice Transport" }
                 },
                 itinerary: { title: "5-Day In-Depth Itinerary", 
-                    d1: { t: "Taipei → Osaka Kansai → Katsuo-ji Temple → Tamba Sasayama", am: "Gather at Taoyuan Airport, take VietJet Air VZ566 to Osaka Kansai (07:50-11:25).", pm: <span>Visit the secret [<a href="https://www.klook.com/zh-TW/blog/katsuo-ji-temple-day-trip/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Katsuo-ji Temple</a>], admire the 'Daruma dolls' everywhere, and pray for victory and luck.</span>, night: <span>Check in at [<a href="https://tw.tabiiro.travel/hotels/s/103507-sasayama-grandvrio-tambasasayama/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Tamba Sasayama Grandvrio Hotel or similar</a>], enjoy semi-Kaiseki buffet + '90 min all-you-can-drink'.</span>, meal: {b: "X", l: "In-flight", d: "Buffet + Free Flow"}, hotel: "Tamba Sasayama Grandvrio Hotel (Onsen) or similar" },
+                    d1: { t: "Taipei → Osaka Kansai → Katsuo-ji Temple → Tamba Sasayama", am: "Gather at Taoyuan Airport, take VietJet Air VZ566 to Osaka Kansai (07:50-11:25).", pm: <span>Visit the secret [<a href="https://www.klook.com/zh-TW/blog/katsuo-ji-temple-day-trip/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Katsuo-ji Temple</a>], admire the 'Daruma dolls' everywhere, and pray for victory and luck.</span>, night: <span>Check in at [<a href="https://tw.tabiiro.travel/hotels/s/103507-sasayama-grandvrio-tambasasayama/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Tamba Sasayama Grandvrio Hotel or similar</a>], enjoy semi-Kaiseki buffet + '90 min all-you-can-drink'.</span>, meal: {b: "X", l: "In-flight", d: "Buffet + Free Flow"} },
                     d2: { t: "Yamana Brewery → Lunch with President → Aomatsu Train", am: <span>★Exclusive [<a href="https://tw.sakemaru.me/blogs/%E9%85%92%E9%80%A0/%E5%B1%B1%E5%90%8D%E9%85%92%E9%80%A0" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Yamana Brewery Visit</a>]: Personally participate in the 'Rice Washing', the starting point of brewing. Feel the craftsman spirit passed down for nearly 300 years and lay the foundation for the pure flavor of sake.</span>, l_text: "The brewery president joins the table for lunch, hosting with fine sake and personal explanation, enjoying a local special Soba meal.", pm: <span>Take the Tango Railway [<a href="https://willer-travel.com/tw/train/tantetsu/aomatsu.html" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Aomatsu Train</a>], travel on the Yura River Bridge, and admire the dreamlike scenery resembling the sea train in Spirited Away.</span>, stay: <span>Head to <a href="https://www.amanohashidate-htl.co.jp/lg_tw/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Amanohashidate Hotel</a> or <a href="https://all.accor.com/hotel/C1P6/index.ja.shtml?utm_campaign=seo+maps&utm_medium=seo+maps&utm_source=google+Maps" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Mercure Kyoto Miyazu Resort & Spa</a> or similar.</span>, meal: {b: "Hotel", l: "Soba Special", d: "Kaiseki or Buffet"}, hotel: "Amanohashidate Hotel or Mercure Kyoto Miyazu or similar" },
-                    d3: { t: "Ine Bay Cruise → Shirasugi Brewery → Cable Car", am: <span>Take the [<a href="https://www.tankai.jp/tw/cruise/ine-bay-boat-tour/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Ine Bay Sightseeing Boat</a>], cruise smoothly around Ine Bay, observe the Funaya structure, and feed seagulls.</span>, pm: <span>★Exclusive [<a href="https://tw.sakemaru.me/blogs/%E9%85%92%E9%80%A0/%E7%99%BD%E6%9D%89%E9%85%92%E9%80%A0%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Shirasugi Brewery Visit</a>]: Visit the mysterious 'Wartime Cave', explore the secrets of 100% edible rice brewing and tasting.</span>, sight: <span>Take the Amanohashidate Cable Car to [<a href="https://look2uptravel.com/post-263459824/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Kasamatsu Park Observatory</a>], experience 'Matanozoki' (viewing between legs), overlooking Amanohashidate like a flying dragon.</span>, meal: {b: "Hotel", l: "Local Flavor", d: "Kaiseki or Buffet"}, hotel: "Amanohashidate Hotel or Mercure Kyoto Miyazu or similar" },
+                    d3: { t: "Ine Bay Cruise → Shirasugi Brewery → Cable Car", am: <span>Take the [<a href="https://www.tankai.jp/tw/cruise/ine-bay-boat-tour/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Ine Bay Sightseeing Boat</a>], cruise smoothly around Ine Bay, observe the Funaya structure, and feed seagulls.</span>, pm: <span>★Exclusive [<a href="https://tw.sakemaru.me/blogs/%E9%85%92%E9%80%A0/%E7%99%BD%E6%9D%89%E9%85%92%E9%80%A0%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Shirasugi Brewery Visit</a>]: Visit the mysterious 'Wartime Cave', explore the secrets of 100% edible rice brewing and tasting.</span>, sight: <span>Take the <a href="https://www.tankai.jp/tw/observatory/amanohashidate-kasamatsu-park/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Amanohashidate Cable Car</a> to [<a href="https://look2uptravel.com/post-263459824/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Kasamatsu Park Observatory</a>], experience 'Matanozoki' (viewing between legs), overlooking Amanohashidate like a flying dragon.</span>, meal: {b: "Hotel", l: "Local Flavor", d: "Kaiseki or Buffet"}, hotel: "Amanohashidate Hotel or Mercure Kyoto Miyazu or similar" },
                     d4: { t: "Ikeda Brewery → Maizuru Port Seafood → Osaka City", am: <span>★Exclusive [<a href="https://tw.sakemaru.me/blogs/%E9%85%92%E9%80%A0/%E6%B1%A0%E7%94%B0%E9%85%92%E9%80%A0" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Ikeda Brewery Visit</a>]: Located in Maizuru, experience 'Rice Washing + Steamed Rice Transport' and feel the craftsman's passion.</span>, l_text: <span>Go to [<a href="https://www.gltjp.com/zh-hant/directory/item/11920/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Maizuru Port Seafood Market</a>], the largest market in the Sea of Japan, and enjoy a direct-delivered seafood set meal.</span>, pm: <span>Return to Osaka city hotel, check in at <a href="https://www.ihg.com/holidayinnexpress/hotels/tw/zh/osaka/osams/hoteldetail" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Holiday Inn Express Midosuji</a> or <a href="https://www.marriott.com/en-us/hotels/osaoo-moxy-osaka-umeda/overview/?scid=f2ae0541-1279-4f24-b197-a979c79310b0" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">MOXY Osaka Shin Umeda</a> or similar, free time (Shinsaibashi recommended).</span>, meal: {b: "Hotel", l: "Seafood Set", d: "Self-arranged"}, hotel: "Holiday Inn Express or MOXY Osaka or similar" },
                     d5: { t: "Osaka → Kansai Airport → Taipei", am: "Enjoy hotel breakfast, grasp the last free time.", pm: "Go to Osaka Kansai Airport, take VZ567 (12:25-14:25) back to Taipei.", meal: {b: "Hotel", l: "In-flight", d: "X"}, hotel: "Sweet Home" },
                     noteTitle: "Important Notes", notes: ["If the sightseeing train 'Aomatsu' cannot be boarded due to full seats or weather, 600 JPY will be refunded per person."],
@@ -195,8 +249,9 @@
                     official: "Official Price (Twin)", early: "Plan A: Super Early Bird (5% Off)", earlyNote: "Limit 10", double: "Plan B: Double Booking", doubleNote: "$1,000 Off per person",
                     joinLocal: "✈️ Land Only Price (Join Local)", joinDesc: "Deducting ticket and tax if self-arranged flights.", finalPrice: "Final:", perPerson: "/ person",
                     note: "* Plan A and B cannot be combined.", bonus: "🎁 SAKEMARU Bonus Gift:", bonusDesc: "One bottle of brewery selected sake!",
-                    btnLine: "Consult via LINE", btnFb: "Facebook Page", btnIg: "Instagram", btnCall: "Call Us (02-2700-0903)", btnSeminar: "Seminar Registration",
-                    timeUnits: { d: "d", h: "h", m: "m", s: "s" }
+                    btnLine: "Consult via LINE", btnFb: "Facebook Page Consultation", btnIg: "Instagram Official Account Consultation", btnCall: "Call Us (02-2700-0903)", btnSeminar: "Seminar Registration", btnSeminarSub: "NT$ 200 / person (Includes 3 sakes & snacks)",
+                    timeUnits: { d: "d", h: "h", m: "m", s: "s" },
+                    modalTitle: "Select Payment Method", credit: "Credit Card", creditNote: "Consult staff for credit card", transfer: "Bank Transfer"
                 },
                 footer: { desc: "SAKEMARU Sake Artisan Pilgrimage.\nTo ensure the smooth execution of all exclusive itineraries, we will adjust the itinerary if necessary based on the 'Domestic/Foreign Travel Standard Contract' and with passenger rights as the primary consideration.",
                     contact: "Contact", tel: "Tel", addr: "Address", addrVal: "No. 226, Ruian St., Da’an Dist., Taipei City", official: "Official Site", partner: "Ri-Shen Travel", license: "License No. North 2190 · Type A 7830",
@@ -213,7 +268,7 @@
             }
         };
 
-        // ... (Icons) ...
+        // ... (Icons: Wine, MapPin, Train, Calendar, Plane, Utensils, BedDouble, Info, Check, ChevronDown, ChevronUp, Star, Waves, User, HelpCircle, Phone, Facebook, Instagram, XIcon, Video, Users, Home, CreditCard, Banknote, Beer, Ban) ...
         const IconBase = ({ children, className }) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>);
         const Wine = ({ className }) => (<IconBase className={className}><path d="M8 22h8"/><path d="M7 10h10"/><path d="M12 15v7"/><path d="M12 15a5 5 0 0 0 5-5c0-2-.5-4-2-8H9c-1.5 4-2 6-2 8a5 5 0 0 0 5 5Z"/></IconBase>);
         const MapPin = ({ className }) => (<IconBase className={className}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></IconBase>);
@@ -230,15 +285,19 @@
         const Waves = ({ className }) => (<IconBase className={className}><path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/></IconBase>);
         const User = ({ className }) => (<IconBase className={className}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></IconBase>);
         const HelpCircle = ({ className }) => (<IconBase className={className}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></IconBase>);
-        const Phone = ({ className }) => (<IconBase className={className}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></IconBase>);
+        const Phone = ({ className }) => (<IconBase className={className}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></IconBase>);
         const Facebook = ({ className }) => (<IconBase className={className}><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></IconBase>);
         const Instagram = ({ className }) => (<IconBase className={className}><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></IconBase>);
         const XIcon = ({ className, onClick }) => (<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} onClick={onClick}><path d="M18 6 6 18"/><path d="m6 6 18 18"/></svg>);
         const Video = ({ className }) => (<IconBase className={className}><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2" ry="2"/></IconBase>);
         const Users = ({ className }) => (<IconBase className={className}><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></IconBase>);
         const Home = ({ className }) => (<IconBase className={className}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></IconBase>);
+        const CreditCard = ({ className }) => (<IconBase className={className}><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></IconBase>);
+        const Banknote = ({ className }) => (<IconBase className={className}><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></IconBase>);
+        const Beer = ({ className }) => (<IconBase className={className}><path d="M17 11h1a3 3 0 0 1 0 6h-1"/><path d="M9 12v6"/><path d="M13 12v6"/><path d="M14 7.5c-1 0-1.44.5-3 .5s-2-.5-3-.5-1.72.5-2.5.5a2.5 2.5 0 0 1 0-5c.78 0 1.57.5 2.5.5S9.44 2 11 2s2 .5 3 .5 1.72-.5 2.5-.5a2.5 2.5 0 0 1 0 5c-.78 0-1.5-.5-2.5-.5Z"/><path d="M5 8v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8"/></IconBase>);
+        const Ban = ({ className }) => (<IconBase className={className}><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></IconBase>);
         
-        // --- Modal Component ---
+        // --- Components ---
         const Modal = ({ isOpen, onClose, children }) => {
             if (!isOpen) return null;
             return (
@@ -251,12 +310,23 @@
             );
         };
 
+        const AlcoholWarning = () => {
+             return (
+                <div className="alcohol-warning-container">
+                    <img src={WARNING_ICON_URL} alt="禁止酒駕" className="alcohol-warning-img" />
+                    <span className="alcohol-warning-text">禁止酒駕，未滿十八歲禁止飲酒</span>
+                </div>
+            );
+        };
+
         const Header = ({ onViewChange, currentView, lang, setLang, t }) => {
             const [isScrolled, setIsScrolled] = useState(false);
             const [isMenuOpen, setIsMenuOpen] = useState(false);
 
             useEffect(() => {
-                const handleScroll = () => setIsScrolled(window.scrollY > 50);
+                const handleScroll = () => {
+                    setIsScrolled(window.scrollY > 50);
+                };
                 window.addEventListener('scroll', handleScroll);
                 return () => window.removeEventListener('scroll', handleScroll);
             }, []);
@@ -278,12 +348,11 @@
             const toggleLang = () => setLang(lang === 'zh-TW' ? 'en' : 'zh-TW');
 
             return (
-                <nav className={`fixed w-full z-50 transition-all duration-300 ${isScrolled || currentView === 'seminar' ? 'bg-white/95 shadow-md py-2 text-slate-800' : 'bg-transparent py-4 text-white'}`}>
+                <nav className={`fixed w-full z-50 transition-all duration-300 ${isScrolled || currentView === 'seminar' || currentView === 'payment' ? 'bg-white/95 shadow-md py-2 text-slate-800' : 'bg-transparent py-4 text-white'}`}>
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex justify-between items-center">
                             <div className="flex items-center space-x-2 cursor-pointer" onClick={() => onViewChange('main')}>
-                                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRunGhhtR2BSoQjF0ArH3MgbNunk2pU81buFw&s" alt="SAKEMARU Logo" className="h-10 w-10 rounded-full object-cover border-2 border-white/80" />
-                                <span className="japanese-font text-2xl font-bold tracking-widest">SAKEMARU</span>
+                                <img src={LOGO_URL} alt="SAKEMARU Logo" className="h-12 object-contain" />
                             </div>
                             
                             <div className="hidden md:flex space-x-6 text-sm font-medium tracking-wide items-center">
@@ -325,7 +394,17 @@
         const Hero = ({ onViewChange, t }) => {
             return (
                 <div className="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden">
-                    <div className="absolute inset-0"><img src="https://tw.sakemaru.me/cdn/shop/articles/E5_B1_B1_E5_90_8D_E9_85_92_E9_80_A0_E6_A0_AA_E5_BC_8F_E4_BC_9A_E7_A4_BE.jpg?v=1694882414" alt="Hero" className="w-full h-full object-cover" onError={(e) => {e.target.src='https://images.unsplash.com/photo-1542051841857-5f90071e7989?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80'}} /><div className="absolute inset-0 hero-gradient"></div></div>
+                    {/* Background Image - Yamana Sake Brewery Exterior (Confirmed) */}
+                    <div className="absolute inset-0">
+                        <img 
+                            src="https://tw.sakemaru.me/cdn/shop/articles/E5_B1_B1_E5_90_8D_E9_85_92_E9_80_A0_E6_A0_AA_E5_BC_8F_E4_BC_9A_E7_A4_BE.jpg?v=1694882414" 
+                            alt="山名酒造外觀" 
+                            className="w-full h-full object-cover"
+                            onError={(e) => {e.target.src='https://images.unsplash.com/photo-1542051841857-5f90071e7989?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80'}}
+                        />
+                        <div className="absolute inset-0 hero-gradient"></div>
+                    </div>
+
                     <div className="relative z-10 text-center px-4 max-w-4xl mx-auto text-white">
                         <span className="block text-amber-400 tracking-[0.3em] uppercase mb-4 text-sm md:text-base font-semibold animate-fade-in-up">{t.hero.subtitle}</span>
                         <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight drop-shadow-lg">{t.hero.title}<br/><span className="japanese-font font-normal text-2xl md:text-4xl mt-4 block">{t.hero.sub}</span></h1>
@@ -411,9 +490,6 @@
             const [openDay, setOpenDay] = useState(0);
 
             const renderContent = (content, dayIndex, type) => {
-                // Reconstruct content that was originally JSX in 'translations' object to support dynamic rendering
-                // This approach ensures links and formatting are preserved and correctly rendered based on language
-                
                 if (lang === 'en') {
                      if (dayIndex === 0 && type === 'pm') return <span>Visit the secret [<a href="https://www.klook.com/zh-TW/blog/katsuo-ji-temple-day-trip/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Katsuo-ji Temple</a>], admire the 'Daruma dolls' everywhere, and pray for victory and luck.</span>;
                     if (dayIndex === 0 && type === 'night') return <span>Check in at [<a href="https://tw.tabiiro.travel/hotels/s/103507-sasayama-grandvrio-tambasasayama/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Tamba Sasayama Grandvrio Hotel or similar</a>], enjoy semi-Kaiseki buffet + '90 min all-you-can-drink'.</span>;
@@ -426,8 +502,9 @@
                     if (dayIndex === 3 && type === 'am') return <span>★Exclusive [<a href="https://tw.sakemaru.me/blogs/%E9%85%92%E9%80%A0/%E6%B1%A0%E7%94%B0%E9%85%92%E9%80%A0" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Ikeda Brewery Visit</a>]: Located in Maizuru, experience 'Rice Washing + Steamed Rice Transport' and feel the craftsman's passion.</span>;
                     if (dayIndex === 3 && type === 'l_text') return <span>Go to [<a href="https://www.gltjp.com/zh-hant/directory/item/11920/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Maizuru Port Seafood Market</a>], the largest market in the Sea of Japan, and enjoy a direct-delivered seafood set meal.</span>;
                     if (dayIndex === 3 && type === 'pm') return <span>Return to Osaka city hotel, check in at <a href="https://www.ihg.com/holidayinnexpress/hotels/tw/zh/osaka/osams/hoteldetail" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Holiday Inn Express Midosuji</a> or <a href="https://www.marriott.com/en-us/hotels/osaoo-moxy-osaka-umeda/overview/?scid=f2ae0541-1279-4f24-b197-a979c79310b0" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">MOXY Osaka Shin Umeda</a> or similar, free time (Shinsaibashi recommended).</span>;
+                    return content;
                 }
-
+                
                 if (lang === 'zh-TW') {
                     if (dayIndex === 0 && type === 'pm') return <span>前往秘境【<a href="https://www.klook.com/zh-TW/blog/katsuo-ji-temple-day-trip/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">達摩勝尾寺</a>】，欣賞遍佈境內的「達摩不倒翁」，祈求勝利與吉祥。</span>;
                     if (dayIndex === 0 && type === 'night') return <span>入住【<a href="https://tw.tabiiro.travel/hotels/s/103507-sasayama-grandvrio-tambasasayama/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">丹波篠山和藏格蘭比利歐酒店或同級</a>】，享用半會席自助餐 +「90分鐘酒水無限暢飲」。</span>;
@@ -442,7 +519,7 @@
                     if (dayIndex === 3 && type === 'pm') return <span>返回大阪市區飯店，入住<a href="https://www.ihg.com/holidayinnexpress/hotels/tw/zh/osaka/osams/hoteldetail" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Holiday Inn Express 御堂筋</a>或<a href="https://www.marriott.com/en-us/hotels/osaoo-moxy-osaka-umeda/overview/?scid=f2ae0541-1279-4f24-b197-a979c79310b0" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">MOXY大阪新梅田</a>或同級，自由活動（推薦前往心齋橋）。</span>;
                 }
                 
-                return content; // Default return for unlinked content in object
+                return content; 
             };
 
             const daysData = [t.itinerary.d1, t.itinerary.d2, t.itinerary.d3, t.itinerary.d4, t.itinerary.d5];
@@ -492,7 +569,7 @@
             );
         };
 
-        // Info Section (Gallery style) - All links removed as requested (link: null)
+        // Info Section
         const InfoSection = ({ t }) => {
              const images = [
                 { ...t.info.gallery[0], src: "https://i.postimg.cc/tR1D45xZ/Generated-Image-November-07-2025-5-02PM.png", link: null },
@@ -575,11 +652,10 @@
             )
         }
 
-        const Pricing = ({ onLineClick, onViewChange, t, lang }) => {
+        const Pricing = ({ onLineClick, onViewChange, t, lang, onOpenPayment }) => {
             const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
             useEffect(() => {
-                const targetDate = new Date();
-                targetDate.setDate(targetDate.getDate() + 15);
+                const targetDate = new Date('2025-12-31T23:59:59');
                 const interval = setInterval(() => {
                     const now = new Date();
                     const difference = targetDate - now;
@@ -604,20 +680,39 @@
                         <p className="text-lg text-slate-300 mb-10 max-w-2xl mx-auto">{t.pricing.sub}</p>
                         <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 md:p-8 w-full max-w-2xl mx-auto border border-white/20 mb-8">
                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
-                                <div className="p-4 bg-white/5 rounded border border-white/10"><div className="text-slate-400 text-xs uppercase mb-1">{t.pricing.official}</div><div className="text-2xl font-bold">NT$ 56,500 <span className="text-sm text-amber-400 font-normal block mt-1">{t.card}</span></div></div>
-                                <div className="p-4 bg-amber-600/20 rounded border border-amber-500/50 relative overflow-hidden"><div className="absolute top-0 right-0 bg-red-500 text-xs px-2 py-0.5">HOT</div><div className="text-amber-300 text-xs uppercase mb-1">💥 {t.pricing.early}</div><div className="text-2xl font-bold text-amber-400">NT$ 53,675 <span className="text-sm text-white/80 font-normal block mt-1">{t.card}</span></div><div className="text-xs text-amber-200/70 mt-1">{t.pricing.earlyNote}</div></div>
-                                <div className="p-4 bg-blue-600/20 rounded border border-blue-500/50 md:col-span-2"><div className="text-blue-300 text-xs uppercase mb-1">✨ {t.pricing.double}</div><div className="text-2xl font-bold text-blue-100">NT$ 55,500 <span className="text-sm font-normal text-slate-300">{t.pricing.perPerson}</span> <span className="text-sm text-amber-400 font-normal ml-2">{t.card}</span></div><div className="text-xs text-blue-200/70 mt-1">{t.pricing.doubleNote}</div></div>
+                                <div onClick={onOpenPayment} className="p-4 bg-white/5 rounded border border-white/10 cursor-pointer hover:bg-white/10 transition-colors group">
+                                    <div className="text-slate-400 text-xs uppercase mb-1 group-hover:text-white">{t.pricing.official}</div>
+                                    <div className="text-2xl font-bold">NT$ 56,500 <span className="text-sm text-amber-400 font-normal block mt-1">{t.card}</span></div>
+                                </div>
+                                <div onClick={onOpenPayment} className="p-4 bg-amber-600/20 rounded border border-amber-500/50 relative overflow-hidden cursor-pointer hover:bg-amber-600/30 transition-colors group">
+                                     <div className="absolute top-0 right-0 bg-red-500 text-xs px-2 py-0.5">HOT</div>
+                                    <div className="text-amber-300 text-xs uppercase mb-1 group-hover:text-amber-200">💥 {t.pricing.early}</div>
+                                    <div className="text-2xl font-bold text-amber-400">NT$ 53,675 <span className="text-sm text-white/80 font-normal block mt-1">{t.card}</span></div>
+                                    <div className="text-xs text-amber-200/70 mt-1">{t.pricing.earlyNote}</div>
+                                </div>
+                                <div onClick={onOpenPayment} className="p-4 bg-blue-600/20 rounded border border-blue-500/50 md:col-span-2 cursor-pointer hover:bg-blue-600/30 transition-colors group">
+                                    <div className="text-blue-300 text-xs uppercase mb-1 group-hover:text-blue-200">✨ {t.pricing.double}</div>
+                                    <div className="text-2xl font-bold text-blue-100">NT$ 55,500 <span className="text-sm font-normal text-slate-300">{t.pricing.perPerson}</span> <span className="text-sm text-amber-400 font-normal ml-2">{t.card}</span></div>
+                                    <div className="text-xs text-blue-200/70 mt-1">{t.pricing.doubleNote}</div>
+                                </div>
                              </div>
-                             <div className="mt-6 p-4 bg-slate-800/50 rounded text-left border border-slate-700"><h4 className="text-amber-400 font-bold mb-2 flex items-center gap-2"><Plane className="w-4 h-4"/> {t.pricing.joinLocal}</h4><p className="text-sm text-slate-300 mb-2">{t.pricing.joinDesc}</p><div className="text-xl font-bold text-white">{t.pricing.finalPrice} NT$ 44,300 <span className="text-sm font-normal text-slate-400">{t.pricing.perPerson}</span> <span className="text-sm text-amber-400 font-normal ml-2">{t.card}</span></div></div>
+                             <div onClick={onOpenPayment} className="mt-6 p-4 bg-slate-800/50 rounded text-left border border-slate-700 cursor-pointer hover:bg-slate-700/50 transition-colors group">
+                                <h4 className="text-amber-400 font-bold mb-2 flex items-center gap-2 group-hover:text-amber-300"><Plane className="w-4 h-4"/> {t.pricing.joinLocal}</h4>
+                                <p className="text-sm text-slate-300 mb-2">{t.pricing.joinDesc}</p>
+                                <div className="text-xl font-bold text-white">{t.pricing.finalPrice} NT$ 44,300 <span className="text-sm font-normal text-slate-400">{t.pricing.perPerson}</span> <span className="text-sm text-amber-400 font-normal ml-2">{t.card}</span></div>
+                             </div>
                              <p className="text-xs text-slate-400 mt-4 text-left">{t.pricing.note}</p>
                         </div>
                         <div className="bg-amber-900/50 p-4 rounded-lg inline-block mb-8 border border-amber-700"><span className="text-amber-300 font-bold">{t.pricing.bonus}</span> {t.pricing.bonusDesc}</div>
-                        <div className="flex flex-col gap-4 max-w-md mx-auto">
+                        <div id="social-contact" className="flex flex-col gap-4 max-w-md mx-auto">
                             <button onClick={onLineClick} className="w-full py-4 bg-[#06c755] hover:bg-[#05b54d] text-white rounded-lg font-bold text-lg transition-all shadow-lg flex justify-center items-center gap-2"><img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" className="w-6 h-6 bg-white rounded-full p-0.5" alt="LINE" /><span>{t.pricing.btnLine}</span></button>
                              <a href="https://www.facebook.com/sakemaru.tw?locale=zh_TW" target="_blank" rel="noopener noreferrer" className="w-full py-4 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-lg font-bold text-lg transition-all shadow-lg flex justify-center items-center gap-2"><Facebook className="w-6 h-6" /><span>{t.pricing.btnFb}</span></a>
                             <a href="https://www.instagram.com/sakemaru_tw/" target="_blank" rel="noopener noreferrer" className="w-full py-4 bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] hover:opacity-90 text-white rounded-lg font-bold text-lg transition-all shadow-lg flex justify-center items-center gap-2"><Instagram className="w-6 h-6" /><span>{t.pricing.btnIg}</span></a>
                             <div className="w-full py-4 bg-slate-700 text-white rounded-lg font-bold text-lg shadow-lg flex justify-center items-center gap-2 cursor-default"><Phone className="w-6 h-6" /><span>{t.pricing.btnCall}</span></div>
-                            <button onClick={() => onViewChange('seminar')} className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg font-bold text-lg shadow-lg flex justify-center items-center gap-2 animate-pulse"><Users className="w-6 h-6" /><span>{t.pricing.btnSeminar}</span></button>
+                            <button onClick={() => onViewChange('seminar')} className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg font-bold text-lg shadow-lg flex flex-col justify-center items-center gap-1 animate-pulse">
+                                <div className="flex items-center gap-2"><Users className="w-6 h-6" /><span>{t.pricing.btnSeminar}</span></div>
+                                <span className="text-xs font-normal opacity-90">{t.pricing.btnSeminarSub}</span>
+                            </button>
                         </div>
                     </div>
                 </section>
@@ -642,11 +737,12 @@
             );
         };
 
+        // --- Seminar Page Component (Modified for Google Forms Iframe) ---
         const SeminarPage = ({ onBack, t }) => {
             useEffect(() => { window.scrollTo(0, 0); }, []);
 
             return (
-                <div className="min-h-screen bg-stone-50 pt-20">
+                <div className="min-h-screen bg-stone-50 pt-20 pb-24">
                     <div className="relative bg-slate-900 text-white py-20 px-4 overflow-hidden">
                         <div className="absolute inset-0 opacity-40"><img src="https://i.postimg.cc/zXcJSxct/niang-zao-gong-cheng1.jpg" alt="酒造背景" className="w-full h-full object-cover" /></div>
                         <div className="max-w-4xl mx-auto relative z-10 text-center">
@@ -674,7 +770,18 @@
                         <div className="bg-white p-4 rounded-xl shadow-lg border-t-4 border-amber-600 sticky top-24">
                             <h2 className="text-2xl font-bold text-slate-900 mb-4 text-center">{t.seminar.formTitle}</h2>
                             <div className="w-full overflow-hidden rounded bg-gray-50 border border-gray-200" style={{ height: '866px' }}>
-                                <iframe src={GOOGLE_FORM_URL} width="100%" height="100%" frameBorder="0" marginHeight="0" marginWidth="0" title="Google Form Registration">Loading...</iframe>
+                                {/* Google Form Iframe Container */}
+                                <iframe 
+                                    src={GOOGLE_FORM_SEMINAR_URL}
+                                    width="100%" 
+                                    height="100%" 
+                                    frameBorder="0" 
+                                    marginHeight="0" 
+                                    marginWidth="0"
+                                    title="Google Form Registration"
+                                >
+                                    載入中...
+                                </iframe>
                             </div>
                             <div className="text-center mt-4"><button type="button" onClick={onBack} className="text-sm text-slate-500 hover:text-slate-800 flex items-center justify-center gap-1 mx-auto"><Home className="w-4 h-4"/> {t.seminar.back}</button></div>
                         </div>
@@ -682,8 +789,27 @@
                 </div>
             );
         };
+        
+        const PaymentPage = ({ onBack }) => {
+             useEffect(() => { window.scrollTo(0, 0); }, []);
+             return (
+                <div className="min-h-screen bg-stone-50 pt-24 pb-24 px-4">
+                    <div className="max-w-3xl mx-auto">
+                        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                             <div className="bg-slate-900 text-white p-6 flex justify-between items-center">
+                                <h2 className="text-xl font-bold">Payment / 匯款資訊填寫</h2>
+                                <button onClick={onBack}><XIcon className="w-6 h-6 text-white/80 hover:text-white" /></button>
+                             </div>
+                             <div className="w-full bg-white" style={{ height: '1828px' }}>
+                                <iframe src={GOOGLE_FORM_PAYMENT_URL} width="100%" height="100%" frameBorder="0" marginHeight="0" marginWidth="0">Loading...</iframe>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+             );
+        };
 
-        const MainPage = ({ onLineClick, onViewChange, t, lang }) => {
+        const MainPage = ({ onLineClick, onViewChange, t, lang, onOpenPayment }) => {
             return (
                 <div className="animate-fade-in">
                     <Hero onViewChange={onViewChange} t={t} />
@@ -692,26 +818,61 @@
                     <Itinerary t={t} lang={lang} />
                     <InfoSection t={t} />
                     <FAQ t={t} />
-                    <Pricing onLineClick={onLineClick} onViewChange={onViewChange} t={t} lang={lang} />
+                    <Pricing onLineClick={onLineClick} onViewChange={onViewChange} t={t} lang={lang} onOpenPayment={onOpenPayment} />
                 </div>
             );
         };
 
         const App = () => {
             const [isModalOpen, setIsModalOpen] = useState(false);
+            const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
             const [currentView, setCurrentView] = useState('main');
             const [lang, setLang] = useState('zh-TW');
-
             const t = translations[lang];
+
+            const handleCreditCardClick = () => {
+                setIsPaymentModalOpen(false);
+                const socialSection = document.getElementById('social-contact');
+                if (socialSection) socialSection.scrollIntoView({ behavior: 'smooth' });
+            };
+
+            const handleTransferClick = () => {
+                setIsPaymentModalOpen(false);
+                setCurrentView('payment');
+            };
 
             return (
                 <div className={`antialiased selection:bg-amber-200 selection:text-amber-900 ${lang === 'en' ? 'en-font' : ''}`}>
                     <Header onViewChange={setCurrentView} currentView={currentView} lang={lang} setLang={setLang} t={t} />
-                    {currentView === 'main' && <MainPage onLineClick={() => setIsModalOpen(true)} onViewChange={setCurrentView} t={t} lang={lang} />}
+                    {currentView === 'main' && <MainPage onLineClick={() => setIsModalOpen(true)} onViewChange={setCurrentView} t={t} lang={lang} onOpenPayment={() => setIsPaymentModalOpen(true)} />}
                     {currentView === 'seminar' && <SeminarPage onBack={() => setCurrentView('main')} t={t} />}
+                    {currentView === 'payment' && <PaymentPage onBack={() => setCurrentView('main')} />}
+                    
                     <Footer t={t} />
+                    <AlcoholWarning />
+
+                    {/* LINE QR Code Modal */}
                     <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
                         <div className="text-center"><h3 className="text-xl font-bold text-slate-900 mb-4">加入 LINE 官方帳號</h3><p className="text-sm text-slate-600 mb-4">請掃描下方 QR Code 或點擊按鈕加入好友洽詢席次。</p><div className="bg-white p-2 border border-gray-200 rounded-lg inline-block mb-4"><img src="https://i.postimg.cc/m23nFYZ9/jie-tu-2025-11-12-shang-wu11-08-17.png" alt="LINE QR Code" className="w-48 h-48 object-contain" /></div><a href="https://lin.ee/yNtFdhG" target="_blank" rel="noopener noreferrer" className="block w-full py-3 bg-[#06C755] hover:bg-[#05b54d] text-white rounded font-bold transition-colors">一鍵加入 LINE 好友</a></div>
+                    </Modal>
+
+                    {/* Payment Method Modal */}
+                    <Modal isOpen={isPaymentModalOpen} onClose={() => setIsPaymentModalOpen(false)}>
+                         <div className="text-center p-2">
+                            <h3 className="text-2xl font-bold text-slate-900 mb-6">{t.pricing.modalTitle}</h3>
+                            <div className="space-y-4">
+                                <button onClick={handleCreditCardClick} className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-3 shadow-md">
+                                    <CreditCard className="w-6 h-6" /> {t.pricing.credit}
+                                </button>
+                                <p className="text-red-500 text-sm font-bold mt-1">{t.pricing.creditNote}</p>
+                                
+                                <div className="relative flex py-2 items-center"><div className="flex-grow border-t border-gray-300"></div><span className="flex-shrink-0 mx-4 text-gray-400 text-sm">OR</span><div className="flex-grow border-t border-gray-300"></div></div>
+
+                                <button onClick={handleTransferClick} className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-3 shadow-md">
+                                    <Banknote className="w-6 h-6" /> {t.pricing.transfer}
+                                </button>
+                            </div>
+                        </div>
                     </Modal>
                 </div>
             );
