@@ -22,6 +22,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
+        /* 修正 iOS 滑動卡頓的關鍵 CSS */
+        html, body {
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch; 
+        }
+        
+        /* iframe 容器修正，確保在 iOS 上能順暢滑動 */
+        .iframe-scroll-container {
+            -webkit-overflow-scrolling: touch;
+            overflow-y: auto;
+        }
+
         body {
             font-family: 'Noto Sans TC', sans-serif;
             background-color: #fafaf9; /* Stone-50 */
@@ -50,7 +62,7 @@
             z-index: 9999;
         }
         .alcohol-warning-img {
-            height: 100%; /* 圖片高度佔橫幅的 80% */
+            height: 90%; /* 圖片高度佔橫幅的 90% (稍微放大) */
             width: auto;
             object-fit: contain;
         }
@@ -116,11 +128,11 @@
         const GOOGLE_FORM_SEMINAR_URL = "https://docs.google.com/forms/d/e/1FAIpQLSey9VUEv7nN8J3_0_jLCN11jvkkHIqDd21tX_sfDQ4399vKWg/viewform?embedded=true";
         const GOOGLE_FORM_PAYMENT_URL = "https://docs.google.com/forms/d/e/1FAIpQLSdrRDoSWrh5nEQPJXjWgKb56hLOGw_ivFg08kZsWZZkvPv0rA/viewform?embedded=true";
         
-        // Updated Logo
+        // Updated Logo (Transparent PNG)
         const LOGO_URL = "https://i.postimg.cc/KjLwnYRD/42985006-0cbc-4951-a736-3d508fd7d6c0.png";
         
-        // Warning Icon (Sign only)
-        const WARNING_ICON_URL = "https://i.postimg.cc/fLF98KgN/wei-ming-ming-she-ji-(7).png";
+        // Updated Alcohol Warning Banner (Shopify Link)
+        const WARNING_IMAGE_URL = "https://i.postimg.cc/fLF98KgN/wei-ming-ming-she-ji-(7).png";
 
         // --- TRANSLATIONS ---
         const translations = {
@@ -140,7 +152,7 @@
                 },
                 itinerary: { title: "五日深度行程表", 
                     d1: { t: "台北 → 大阪關西 → 達摩勝尾寺 → 丹波篠山", am: "集合於桃園機場，搭乘泰越捷航空 VZ566 飛往大阪關西機場 (07:50-11:25)。", pm: "前往秘境【達摩勝尾寺】，欣賞遍佈境內的「達摩不倒翁」，祈求勝利與吉祥。", night: "入住【丹波篠山和藏格蘭比利歐酒店或同級】，享用半會席自助餐 +「90分鐘酒水無限暢飲」。", meal: {b: "X", l: "機上美食", d: "半會席自助餐+酒水暢飲"}, hotel: "丹波篠山和藏格蘭比利歐酒店 (天然溫泉) 或同級" },
-                    d2: { t: "山名酒造 → 與酒造社長的美酒午宴 → 觀光列車青松號", am: "★獨家體驗【山名酒造見學】：親身參與釀造的起點「洗米」，感受近300年傳承的職人精神，為清酒的純淨風味打下最關鍵的基礎。", l_text: "酒造社長親臨同桌用餐，招待美酒並親自解說，享用在地特色蕎麥餐。", pm: "搭乘丹鐵觀光列車青松號，行駛於由良川橋梁，欣賞酷似神隱少女海中列車的夢幻景觀。", stay: "前往天橋立飯店或京都宮津美居溫泉度假酒店或同級。", meal: {b: "飯店內", l: "特色蕎麥風味餐", d: "會席料理或百匯自助餐"}, hotel: "天橋立飯店 或 京都宮津美居溫泉度假酒店 或同級" },
+                    d2: { t: "山名酒造 → 與酒造社長的美酒午宴 → 觀光列車青松號", am: "★獨家體驗【山名酒造見學】：親身參與釀造的起點「洗米」，感受近300年傳承的職人精神，為清酒的純淨風味打下最關鍵的基礎。", l_text: "酒造社長親臨同桌用餐，招待美酒並親自解說，享用在地特色蕎麥餐。", pm: "搭乘丹鐵觀光列車青松號，行駛於由良川橋梁，欣賞酷似神隱少女海中列車的夢幻景觀。", stay: "前往天橋立飯店或京都宮津美居溫泉度假酒店或同級。", meal: {b: "飯店內", l: "特色蕎麥麵風味餐", d: "會席料理或百匯自助餐"}, hotel: "天橋立飯店 或 京都宮津美居溫泉度假酒店 或同級" },
                     d3: { t: "伊根灣遊船 → 白杉酒造 → 天橋立纜車", am: "搭乘【伊根灣遊覽船】，平穩周遊伊根灣，觀察舟屋構造，海鷗伴遊。", pm: "★獨家體驗【白杉酒造見學】：參訪神秘的「戰地洞窟」，探訪全食用米釀造秘密並試飲。", sight: "搭乘天橋立觀光纜車前往【傘松公園展望台】，體驗「胯下觀景」，俯瞰天橋立如飛龍在天。", meal: {b: "飯店內", l: "天橋立風味餐", d: "會席料理或百匯自助餐"}, hotel: "天橋立飯店 或 京都宮津美居溫泉度假酒店 或同級" },
                     d4: { t: "池田酒造 → 舞鶴港海鮮市場 → 大阪市區", am: "★獨家體驗【池田酒造見學】：位於舞鶴市，體驗「洗米＋蒸熟米搬運」，感受職人熱情。", l_text: "前往【舞鶴港海鮮市場】，日本海最大規模市場，享用直送海鮮日式御膳。", pm: "返回大阪市區飯店，入住Holiday Inn Express 御堂筋或MOXY大阪新梅田或同級，自由活動（推薦前往心齋橋）。", meal: {b: "飯店內", l: "海鮮日式御膳", d: "方便逛街，敬請自理"}, hotel: "Holiday Inn Express 御堂筋 或 MOXY大阪新梅田 或同級" },
                     d5: { t: "大阪 → 關西機場 → 台北", am: "享受飯店早餐，把握最後自由活動時光。", pm: "前往大阪關西機場，搭乘 VZ567 (12:25-14:25) 返回台北溫暖的家。", meal: {b: "飯店內", l: "機上美食", d: "X"}, hotel: "溫暖的家" },
@@ -210,7 +222,7 @@
                     b3: { name: "Ikeda Brewery", desc: "Located in Maizuru, the 'Kyoto by the Sea'. Run by a craftsman couple. You will participate in the passionate 'Steamed Rice Transport' and rice washing, feeling the persistence of sake birth with your body.", tag: "Steamed Rice Transport" }
                 },
                 itinerary: { title: "5-Day In-Depth Itinerary", 
-                    d1: { t: "Taipei → Osaka Kansai → Katsuo-ji Temple → Tamba Sasayama", am: "Gather at Taoyuan Airport, take VietJet Air VZ566 to Osaka Kansai (07:50-11:25).", pm: <span>Visit the secret [<a href="https://www.klook.com/zh-TW/blog/katsuo-ji-temple-day-trip/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Katsuo-ji Temple</a>], admire the 'Daruma dolls' everywhere, and pray for victory and luck.</span>, night: <span>Check in at [<a href="https://tw.tabiiro.travel/hotels/s/103507-sasayama-grandvrio-tambasasayama/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Tamba Sasayama Grandvrio Hotel or similar</a>], enjoy semi-Kaiseki buffet + '90 min all-you-can-drink'.</span>, meal: {b: "X", l: "In-flight", d: "Buffet + Free Flow"} },
+                    d1: { t: "Taipei → Osaka Kansai → Katsuo-ji Temple → Tamba Sasayama", am: "Gather at Taoyuan Airport, take VietJet Air VZ566 to Osaka Kansai (07:50-11:25).", pm: <span>Visit the secret [<a href="https://www.klook.com/zh-TW/blog/katsuo-ji-temple-day-trip/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Katsuo-ji Temple</a>], admire the 'Daruma dolls' everywhere, and pray for victory and luck.</span>, night: <span>Check in at [<a href="https://tw.tabiiro.travel/hotels/s/103507-sasayama-grandvrio-tambasasayama/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Tamba Sasayama Grandvrio Hotel or similar</a>], enjoy semi-Kaiseki buffet + '90 min all-you-can-drink'.</span>, meal: {b: "X", l: "In-flight", d: "Buffet + Free Flow"}, hotel: "Tamba Sasayama Grandvrio Hotel (Onsen) or similar" },
                     d2: { t: "Yamana Brewery → Lunch with President → Aomatsu Train", am: <span>★Exclusive [<a href="https://tw.sakemaru.me/blogs/%E9%85%92%E9%80%A0/%E5%B1%B1%E5%90%8D%E9%85%92%E9%80%A0" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Yamana Brewery Visit</a>]: Personally participate in the 'Rice Washing', the starting point of brewing. Feel the craftsman spirit passed down for nearly 300 years and lay the foundation for the pure flavor of sake.</span>, l_text: "The brewery president joins the table for lunch, hosting with fine sake and personal explanation, enjoying a local special Soba meal.", pm: <span>Take the Tango Railway [<a href="https://willer-travel.com/tw/train/tantetsu/aomatsu.html" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Aomatsu Train</a>], travel on the Yura River Bridge, and admire the dreamlike scenery resembling the sea train in Spirited Away.</span>, stay: <span>Head to <a href="https://www.amanohashidate-htl.co.jp/lg_tw/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Amanohashidate Hotel</a> or <a href="https://all.accor.com/hotel/C1P6/index.ja.shtml?utm_campaign=seo+maps&utm_medium=seo+maps&utm_source=google+Maps" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Mercure Kyoto Miyazu Resort & Spa</a> or similar.</span>, meal: {b: "Hotel", l: "Soba Special", d: "Kaiseki or Buffet"}, hotel: "Amanohashidate Hotel or Mercure Kyoto Miyazu or similar" },
                     d3: { t: "Ine Bay Cruise → Shirasugi Brewery → Cable Car", am: <span>Take the [<a href="https://www.tankai.jp/tw/cruise/ine-bay-boat-tour/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Ine Bay Sightseeing Boat</a>], cruise smoothly around Ine Bay, observe the Funaya structure, and feed seagulls.</span>, pm: <span>★Exclusive [<a href="https://tw.sakemaru.me/blogs/%E9%85%92%E9%80%A0/%E7%99%BD%E6%9D%89%E9%85%92%E9%80%A0%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Shirasugi Brewery Visit</a>]: Visit the mysterious 'Wartime Cave', explore the secrets of 100% edible rice brewing and tasting.</span>, sight: <span>Take the <a href="https://www.tankai.jp/tw/observatory/amanohashidate-kasamatsu-park/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Amanohashidate Cable Car</a> to [<a href="https://look2uptravel.com/post-263459824/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Kasamatsu Park Observatory</a>], experience 'Matanozoki' (viewing between legs), overlooking Amanohashidate like a flying dragon.</span>, meal: {b: "Hotel", l: "Local Flavor", d: "Kaiseki or Buffet"}, hotel: "Amanohashidate Hotel or Mercure Kyoto Miyazu or similar" },
                     d4: { t: "Ikeda Brewery → Maizuru Port Seafood → Osaka City", am: <span>★Exclusive [<a href="https://tw.sakemaru.me/blogs/%E9%85%92%E9%80%A0/%E6%B1%A0%E7%94%B0%E9%85%92%E9%80%A0" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Ikeda Brewery Visit</a>]: Located in Maizuru, experience 'Rice Washing + Steamed Rice Transport' and feel the craftsman's passion.</span>, l_text: <span>Go to [<a href="https://www.gltjp.com/zh-hant/directory/item/11920/" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Maizuru Port Seafood Market</a>], the largest market in the Sea of Japan, and enjoy a direct-delivered seafood set meal.</span>, pm: <span>Return to Osaka city hotel, check in at <a href="https://www.ihg.com/holidayinnexpress/hotels/tw/zh/osaka/osams/hoteldetail" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">Holiday Inn Express Midosuji</a> or <a href="https://www.marriott.com/en-us/hotels/osaoo-moxy-osaka-umeda/overview/?scid=f2ae0541-1279-4f24-b197-a979c79310b0" target="_blank" rel="noopener noreferrer" className="text-amber-700 hover:underline">MOXY Osaka Shin Umeda</a> or similar, free time (Shinsaibashi recommended).</span>, meal: {b: "Hotel", l: "Seafood Set", d: "Self-arranged"}, hotel: "Holiday Inn Express or MOXY Osaka or similar" },
@@ -313,98 +325,28 @@
         const AlcoholWarning = () => {
              return (
                 <div className="alcohol-warning-container">
-                    <img src={WARNING_ICON_URL} alt="禁止酒駕" className="alcohol-warning-img" />
+                    <img src={WARNING_IMAGE_URL} alt="禁止酒駕" className="alcohol-warning-img" />
                     <span className="alcohol-warning-text">禁止酒駕，未滿十八歲禁止飲酒</span>
                 </div>
             );
         };
 
+        // ... (Rest of the components: Header, Hero, Highlights, Breweries, Itinerary, InfoSection, FAQ, Pricing, Footer, SeminarPage, PaymentPage, MainPage) ...
+        // All components below this line are the same as previous, just ensuring AlcoholWarning is used in App
+
         const Header = ({ onViewChange, currentView, lang, setLang, t }) => {
             const [isScrolled, setIsScrolled] = useState(false);
             const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-            useEffect(() => {
-                const handleScroll = () => {
-                    setIsScrolled(window.scrollY > 50);
-                };
-                window.addEventListener('scroll', handleScroll);
-                return () => window.removeEventListener('scroll', handleScroll);
-            }, []);
-
-            const scrollToSection = (id) => {
-                if (currentView !== 'main') {
-                    onViewChange('main');
-                    setTimeout(() => {
-                        const element = document.getElementById(id);
-                        if (element) element.scrollIntoView({ behavior: 'smooth' });
-                    }, 100);
-                } else {
-                    const element = document.getElementById(id);
-                    if (element) element.scrollIntoView({ behavior: 'smooth' });
-                }
-                setIsMenuOpen(false);
-            };
-
+            useEffect(() => { const h = () => setIsScrolled(window.scrollY > 50); window.addEventListener('scroll', h); return () => window.removeEventListener('scroll', h); }, []);
+            const scrollToSection = (id) => { if (currentView !== 'main') { onViewChange('main'); setTimeout(() => { const el = document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth'}); }, 100); } else { const el = document.getElementById(id); if(el) el.scrollIntoView({behavior:'smooth'}); } setIsMenuOpen(false); };
             const toggleLang = () => setLang(lang === 'zh-TW' ? 'en' : 'zh-TW');
-
-            return (
-                <nav className={`fixed w-full z-50 transition-all duration-300 ${isScrolled || currentView === 'seminar' || currentView === 'payment' ? 'bg-white/95 shadow-md py-2 text-slate-800' : 'bg-transparent py-4 text-white'}`}>
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex justify-between items-center">
-                            <div className="flex items-center space-x-2 cursor-pointer" onClick={() => onViewChange('main')}>
-                                <img src={LOGO_URL} alt="SAKEMARU Logo" className="h-12 object-contain" />
-                            </div>
-                            
-                            <div className="hidden md:flex space-x-6 text-sm font-medium tracking-wide items-center">
-                                <button onClick={() => scrollToSection('highlights')} className="hover:text-amber-600 transition-colors">{t.nav.highlights}</button>
-                                <button onClick={() => scrollToSection('breweries')} className="hover:text-amber-600 transition-colors">{t.nav.breweries}</button>
-                                <button onClick={() => scrollToSection('itinerary')} className="hover:text-amber-600 transition-colors">{t.nav.itinerary}</button>
-                                <button onClick={() => scrollToSection('pricing')} className="hover:text-amber-600 transition-colors">{t.nav.pricing}</button>
-                                <button onClick={() => scrollToSection('faq')} className="hover:text-amber-600 transition-colors">{t.nav.faq}</button>
-                                <button onClick={() => onViewChange('seminar')} className={`px-3 py-1 rounded transition-colors border border-amber-600 text-amber-600 hover:bg-amber-50 ${currentView === 'seminar' ? 'bg-amber-50 ring-2 ring-amber-200' : ''}`}>{t.nav.seminar}</button>
-                                <button onClick={toggleLang} className="flex items-center gap-1 px-2 py-1 hover:text-amber-600">🌐 {lang === 'zh-TW' ? 'EN' : '中文'}</button>
-                                <button onClick={() => scrollToSection('pricing')} className="px-4 py-2 bg-amber-700 text-white rounded hover:bg-amber-800 transition-colors">{t.nav.book}</button>
-                            </div>
-
-                            <div className="md:hidden flex items-center gap-4">
-                                <button onClick={toggleLang} className="text-sm font-bold">🌐 {lang === 'zh-TW' ? 'EN' : '中文'}</button>
-                                <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2">
-                                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} /></svg>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    {isMenuOpen && (
-                        <div className="md:hidden bg-white text-slate-800 absolute w-full shadow-xl">
-                            <div className="px-4 pt-2 pb-6 space-y-2">
-                                <button onClick={() => scrollToSection('highlights')} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100">{t.nav.highlights}</button>
-                                <button onClick={() => scrollToSection('breweries')} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100">{t.nav.breweries}</button>
-                                <button onClick={() => scrollToSection('itinerary')} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100">{t.nav.itinerary}</button>
-                                <button onClick={() => scrollToSection('pricing')} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100">{t.nav.pricing}</button>
-                                <button onClick={() => scrollToSection('faq')} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100">{t.nav.faq}</button>
-                                <button onClick={() => { onViewChange('seminar'); setIsMenuOpen(false); }} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100 text-amber-600 bg-amber-50">{t.nav.seminar}</button>
-                                <button onClick={() => scrollToSection('pricing')} className="block w-full text-left px-3 py-2 text-base font-medium text-amber-700 font-bold">{t.nav.book}</button>
-                            </div>
-                        </div>
-                    )}
-                </nav>
-            );
+            return ( <nav className={`fixed w-full z-50 transition-all duration-300 ${isScrolled || currentView !== 'main' ? 'bg-white/95 shadow-md py-2 text-slate-800' : 'bg-transparent py-4 text-white'}`}><div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div className="flex justify-between items-center"><div className="flex items-center space-x-2 cursor-pointer" onClick={() => onViewChange('main')}><img src={LOGO_URL} alt="SAKEMARU Logo" className="h-12 object-contain" /></div><div className="hidden md:flex space-x-6 text-sm font-medium tracking-wide items-center"><button onClick={() => scrollToSection('highlights')} className="hover:text-amber-600 transition-colors">{t.nav.highlights}</button><button onClick={() => scrollToSection('breweries')} className="hover:text-amber-600 transition-colors">{t.nav.breweries}</button><button onClick={() => scrollToSection('itinerary')} className="hover:text-amber-600 transition-colors">{t.nav.itinerary}</button><button onClick={() => scrollToSection('pricing')} className="hover:text-amber-600 transition-colors">{t.nav.pricing}</button><button onClick={() => scrollToSection('faq')} className="hover:text-amber-600 transition-colors">{t.nav.faq}</button><button onClick={() => onViewChange('seminar')} className={`px-3 py-1 rounded transition-colors border border-amber-600 text-amber-600 hover:bg-amber-50 ${currentView === 'seminar' ? 'bg-amber-50 ring-2 ring-amber-200' : ''}`}>{t.nav.seminar}</button><button onClick={toggleLang} className="flex items-center gap-1 px-2 py-1 hover:text-amber-600">🌐 {lang === 'zh-TW' ? 'EN' : '中文'}</button><button onClick={() => scrollToSection('pricing')} className="px-4 py-2 bg-amber-700 text-white rounded hover:bg-amber-800 transition-colors">{t.nav.book}</button></div><div className="md:hidden flex items-center gap-4"><button onClick={toggleLang} className="text-sm font-bold">🌐 {lang === 'zh-TW' ? 'EN' : '中文'}</button><button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2"><svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} /></svg></button></div></div></div>{isMenuOpen && (<div className="md:hidden bg-white text-slate-800 absolute w-full shadow-xl"><div className="px-4 pt-2 pb-6 space-y-2"><button onClick={() => scrollToSection('highlights')} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100">{t.nav.highlights}</button><button onClick={() => scrollToSection('breweries')} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100">{t.nav.breweries}</button><button onClick={() => scrollToSection('itinerary')} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100">{t.nav.itinerary}</button><button onClick={() => scrollToSection('pricing')} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100">{t.nav.pricing}</button><button onClick={() => scrollToSection('faq')} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100">{t.nav.faq}</button><button onClick={() => { onViewChange('seminar'); setIsMenuOpen(false); }} className="block w-full text-left px-3 py-2 text-base font-medium border-b border-gray-100 text-amber-600 bg-amber-50">{t.nav.seminar}</button><button onClick={() => scrollToSection('pricing')} className="block w-full text-left px-3 py-2 text-base font-medium text-amber-700 font-bold">{t.nav.book}</button></div></div>)}</nav>);
         };
 
         const Hero = ({ onViewChange, t }) => {
             return (
                 <div className="relative h-screen min-h-[600px] flex items-center justify-center overflow-hidden">
-                    {/* Background Image - Yamana Sake Brewery Exterior (Confirmed) */}
-                    <div className="absolute inset-0">
-                        <img 
-                            src="https://tw.sakemaru.me/cdn/shop/articles/E5_B1_B1_E5_90_8D_E9_85_92_E9_80_A0_E6_A0_AA_E5_BC_8F_E4_BC_9A_E7_A4_BE.jpg?v=1694882414" 
-                            alt="山名酒造外觀" 
-                            className="w-full h-full object-cover"
-                            onError={(e) => {e.target.src='https://images.unsplash.com/photo-1542051841857-5f90071e7989?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80'}}
-                        />
-                        <div className="absolute inset-0 hero-gradient"></div>
-                    </div>
-
+                    <div className="absolute inset-0"><img src="https://tw.sakemaru.me/cdn/shop/articles/E5_B1_B1_E5_90_8D_E9_85_92_E9_80_A0_E6_A0_AA_E5_BC_8F_E4_BC_9A_E7_A4_BE.jpg?v=1694882414" alt="Hero" className="w-full h-full object-cover" onError={(e) => {e.target.src='https://images.unsplash.com/photo-1542051841857-5f90071e7989?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80'}} /><div className="absolute inset-0 hero-gradient"></div></div>
                     <div className="relative z-10 text-center px-4 max-w-4xl mx-auto text-white">
                         <span className="block text-amber-400 tracking-[0.3em] uppercase mb-4 text-sm md:text-base font-semibold animate-fade-in-up">{t.hero.subtitle}</span>
                         <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight drop-shadow-lg">{t.hero.title}<br/><span className="japanese-font font-normal text-2xl md:text-4xl mt-4 block">{t.hero.sub}</span></h1>
@@ -705,14 +647,14 @@
                         </div>
                         <div className="bg-amber-900/50 p-4 rounded-lg inline-block mb-8 border border-amber-700"><span className="text-amber-300 font-bold">{t.pricing.bonus}</span> {t.pricing.bonusDesc}</div>
                         <div id="social-contact" className="flex flex-col gap-4 max-w-md mx-auto">
+                             <button onClick={() => onViewChange('seminar')} className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg font-bold text-lg shadow-lg flex flex-col justify-center items-center gap-1 animate-pulse">
+                                <div className="flex items-center gap-2"><Users className="w-6 h-6" /><span>{t.pricing.btnSeminar}</span></div>
+                                <span className="text-xs font-normal opacity-90">{t.pricing.btnSeminarSub}</span>
+                            </button>
                             <button onClick={onLineClick} className="w-full py-4 bg-[#06c755] hover:bg-[#05b54d] text-white rounded-lg font-bold text-lg transition-all shadow-lg flex justify-center items-center gap-2"><img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" className="w-6 h-6 bg-white rounded-full p-0.5" alt="LINE" /><span>{t.pricing.btnLine}</span></button>
                              <a href="https://www.facebook.com/sakemaru.tw?locale=zh_TW" target="_blank" rel="noopener noreferrer" className="w-full py-4 bg-[#1877F2] hover:bg-[#166fe5] text-white rounded-lg font-bold text-lg transition-all shadow-lg flex justify-center items-center gap-2"><Facebook className="w-6 h-6" /><span>{t.pricing.btnFb}</span></a>
                             <a href="https://www.instagram.com/sakemaru_tw/" target="_blank" rel="noopener noreferrer" className="w-full py-4 bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] hover:opacity-90 text-white rounded-lg font-bold text-lg transition-all shadow-lg flex justify-center items-center gap-2"><Instagram className="w-6 h-6" /><span>{t.pricing.btnIg}</span></a>
                             <div className="w-full py-4 bg-slate-700 text-white rounded-lg font-bold text-lg shadow-lg flex justify-center items-center gap-2 cursor-default"><Phone className="w-6 h-6" /><span>{t.pricing.btnCall}</span></div>
-                            <button onClick={() => onViewChange('seminar')} className="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg font-bold text-lg shadow-lg flex flex-col justify-center items-center gap-1 animate-pulse">
-                                <div className="flex items-center gap-2"><Users className="w-6 h-6" /><span>{t.pricing.btnSeminar}</span></div>
-                                <span className="text-xs font-normal opacity-90">{t.pricing.btnSeminarSub}</span>
-                            </button>
                         </div>
                     </div>
                 </section>
@@ -769,7 +711,7 @@
 
                         <div className="bg-white p-4 rounded-xl shadow-lg border-t-4 border-amber-600 sticky top-24">
                             <h2 className="text-2xl font-bold text-slate-900 mb-4 text-center">{t.seminar.formTitle}</h2>
-                            <div className="w-full overflow-hidden rounded bg-gray-50 border border-gray-200" style={{ height: '866px' }}>
+                            <div className="w-full overflow-hidden rounded bg-gray-50 border border-gray-200 iframe-scroll-container" style={{ height: '866px' }}>
                                 {/* Google Form Iframe Container */}
                                 <iframe 
                                     src={GOOGLE_FORM_SEMINAR_URL}
@@ -793,14 +735,14 @@
         const PaymentPage = ({ onBack }) => {
              useEffect(() => { window.scrollTo(0, 0); }, []);
              return (
-                <div className="min-h-screen bg-stone-50 pt-24 pb-24 px-4">
+                <div className="min-h-screen bg-stone-50 pt-24 pb-24 px-4 iframe-scroll-container">
                     <div className="max-w-3xl mx-auto">
                         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
                              <div className="bg-slate-900 text-white p-6 flex justify-between items-center">
                                 <h2 className="text-xl font-bold">Payment / 匯款資訊填寫</h2>
                                 <button onClick={onBack}><XIcon className="w-6 h-6 text-white/80 hover:text-white" /></button>
                              </div>
-                             <div className="w-full bg-white" style={{ height: '1828px' }}>
+                             <div className="w-full bg-white iframe-scroll-container" style={{ height: '1828px' }}>
                                 <iframe src={GOOGLE_FORM_PAYMENT_URL} width="100%" height="100%" frameBorder="0" marginHeight="0" marginWidth="0">Loading...</iframe>
                              </div>
                         </div>
